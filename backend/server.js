@@ -23,6 +23,20 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serverless DB Auto-initialization Middleware
+let dbInitialized = false;
+app.use(async (req, res, next) => {
+  if (!dbInitialized) {
+    try {
+      await initializeDatabase();
+      dbInitialized = true;
+    } catch (e) {
+      console.error('Database serverless init warning:', e.message);
+    }
+  }
+  next();
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'Infinity Run Backend API', timestamp: new Date() });
@@ -47,18 +61,22 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-async function startServer() {
-  try {
-    await initializeDatabase();
-    app.listen(PORT, () => {
-      console.log(`=================================================`);
-      console.log(`  Infinity Run API Server running on port ${PORT}`);
-      console.log(`  Health Check: http://localhost:${PORT}/api/health`);
-      console.log(`=================================================`);
-    });
-  } catch (err) {
-    console.error('Failed to initialize database or start server:', err);
+if (require.main === module) {
+  async function startServer() {
+    try {
+      await initializeDatabase();
+      dbInitialized = true;
+      app.listen(PORT, () => {
+        console.log(`=================================================`);
+        console.log(`  Infinity Run API Server running on port ${PORT}`);
+        console.log(`  Health Check: http://localhost:${PORT}/api/health`);
+        console.log(`=================================================`);
+      });
+    } catch (err) {
+      console.error('Failed to initialize database or start server:', err);
+    }
   }
+  startServer();
 }
 
-startServer();
+module.exports = app;
