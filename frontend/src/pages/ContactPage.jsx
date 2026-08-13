@@ -48,7 +48,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white text-black font-sans pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* LEFT COLUMN: Header, Info Cards Grid, Map */}
