@@ -4,30 +4,38 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 require('dotenv').config();
 
-let isConnected = false;
+let connectPromise = null;
 
 const connectDB = async () => {
-  if (isConnected && mongoose.connection.readyState === 1) {
+  if (mongoose.connection.readyState === 1) {
     return;
   }
 
-  const defaultMongoUri = 'mongodb+srv://InfinityRun:Run_123@cluster0.gutqbpe.mongodb.net/infinity_run?retryWrites=true&w=majority';
-  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || defaultMongoUri;
+  if (!connectPromise) {
+    const defaultMongoUri = 'mongodb+srv://InfinityRun:Run_123@cluster0.gutqbpe.mongodb.net/infinity_run?retryWrites=true&w=majority';
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || defaultMongoUri;
+
+    console.log('[MongoDB Atlas] Initiating database connection...');
+    connectPromise = mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 10000
+    }).then(async (conn) => {
+      console.log(`[MongoDB Atlas] Connected successfully to database: ${conn.connection.name}`);
+      await initializeDatabase();
+      return conn;
+    }).catch((error) => {
+      connectPromise = null;
+      console.error('[MongoDB Atlas] Connection failed:', error.message);
+      if (process.env.NODE_ENV === 'production') {
+        throw error;
+      }
+    });
+  }
 
   try {
-    const conn = await mongoose.connect(mongoUri, {
-      bufferCommands: false,
-      serverSelectionTimeoutMS: 10000
-    });
-    isConnected = true;
-    console.log(`[MongoDB Atlas] Connected successfully to database: ${conn.connection.name}`);
-
-    await initializeDatabase();
-  } catch (error) {
-    console.error('[MongoDB Atlas] Connection failed:', error.message);
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1);
-    }
+    await connectPromise;
+  } catch (e) {
+    connectPromise = null;
+    throw e;
   }
 };
 
