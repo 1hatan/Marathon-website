@@ -11,7 +11,7 @@ const connectDB = async () => {
     return;
   }
 
-  const defaultMongoUri = 'mongodb+srv://Admin:Admin_123@cluster0.gutqbpe.mongodb.net/infinity_run?retryWrites=true&w=majority';
+  const defaultMongoUri = 'mongodb+srv://InfinityRun:Run_123@cluster0.gutqbpe.mongodb.net/infinity_run?retryWrites=true&w=majority';
   const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || defaultMongoUri;
 
   try {
