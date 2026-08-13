@@ -200,24 +200,6 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* 5. Bottom CTA Banner matching Home Page colors & fonts */}
-        <div className="bg-black text-white rounded-3xl p-8 relative overflow-hidden shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
-            <span className="text-xs font-black tracking-widest text-rock-yellow uppercase">Ready to Join Us?</span>
-            <h3 className="text-2xl sm:text-3xl font-black uppercase font-outfit">Secure Your Official Entry Slot</h3>
-            <p className="text-xs text-gray-300 max-w-xl font-medium">
-              Registrations are open for 3K, 5K, 10K, and 21K Half Marathon categories. Early bird runners receive official T-shirt and finisher medal.
-            </p>
-          </div>
-          <Link
-            to="/register"
-            className="bg-rock-yellow hover:bg-rock-yellowHover text-black font-extrabold px-7 py-3.5 rounded-full text-xs transition-all shadow-md shrink-0 flex items-center gap-1.5"
-          >
-            <span>REGISTER NOW</span>
-            <ArrowUpRight className="w-4 h-4 stroke-[3]" />
-          </Link>
-        </div>
-
       </div>
     </div>
   );

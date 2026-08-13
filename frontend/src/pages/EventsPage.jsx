@@ -203,24 +203,6 @@ export default function EventsPage() {
           </div>
         </div>
 
-        {/* Bottom CTA */}
-        <div className="bg-black text-white rounded-3xl p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
-            <span className="text-xs font-black tracking-widest text-rock-yellow uppercase">Official Registration</span>
-            <h3 className="text-2xl sm:text-3xl font-black uppercase font-outfit">Ready to Register for Your Race?</h3>
-            <p className="text-xs text-gray-300 max-w-xl font-medium">
-              Slots are limited for timed 21K, 10K, and 5K categories. Secure your official bib and dry-fit event tee today.
-            </p>
-          </div>
-          <Link
-            to="/register"
-            className="bg-rock-yellow hover:bg-rock-yellowHover text-black font-extrabold px-7 py-3.5 rounded-full text-xs transition-all shadow-md shrink-0 flex items-center gap-1.5 font-outfit"
-          >
-            <span>REGISTER NOW</span>
-            <ArrowUpRight className="w-4 h-4 stroke-[3]" />
-          </Link>
-        </div>
-
       </div>
     </div>
   );

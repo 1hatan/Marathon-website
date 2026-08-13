@@ -83,26 +83,6 @@ export default function FAQPage() {
           })}
         </div>
 
-        {/* Contact Support Banner */}
-        <div className="bg-black text-white rounded-3xl p-8 text-center space-y-4 shadow-xl">
-          <div className="w-12 h-12 rounded-2xl bg-rock-yellow text-black mx-auto flex items-center justify-center font-bold">
-            <MessageCircle className="w-6 h-6" />
-          </div>
-          <h3 className="text-2xl font-black font-outfit uppercase">Still Have Questions?</h3>
-          <p className="text-gray-300 text-xs sm:text-sm max-w-md mx-auto font-medium">
-            Can't find the answer you're looking for? Get in touch with our event support team.
-          </p>
-          <div>
-            <Link
-              to="/contact"
-              className="inline-flex items-center justify-center gap-1.5 bg-rock-yellow hover:bg-rock-yellowHover text-black font-extrabold py-3.5 px-6 rounded-full text-xs transition-all shadow-md"
-            >
-              <span>Contact Event Support</span>
-              <ArrowUpRight className="w-4 h-4 stroke-[3]" />
-            </Link>
-          </div>
-        </div>
-
       </div>
     </div>
   );
