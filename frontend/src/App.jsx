@@ -7,6 +7,7 @@ import IntroLoader from './components/IntroLoader';
 // Public Pages
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
+import EventsPage from './pages/EventsPage';
 import PrizesPage from './pages/PrizesPage';
 import GalleryPage from './pages/GalleryPage';
 import FAQPage from './pages/FAQPage';
@@ -57,6 +58,7 @@ export default function App() {
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/events" element={<EventsPage />} />
           <Route path="/prizes" element={<PrizesPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/faq" element={<FAQPage />} />

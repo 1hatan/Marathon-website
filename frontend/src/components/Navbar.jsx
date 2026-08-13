@@ -14,27 +14,14 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
-    { name: 'Prizes', path: '/prizes' },
+    { name: 'Events', path: '/events' },
     { name: 'Gallery', path: '/gallery' },
     { name: 'FAQ', path: '/faq' },
     { name: 'Contact', path: '/contact' },
   ];
 
-  const handleNavClick = (e, link) => {
+  const handleNavClick = () => {
     setMobileMenuOpen(false);
-    if (location.pathname === '/') {
-      if (link.path === '/') {
-        e.preventDefault();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        const sectionId = link.path.replace('/', '');
-        const elem = document.getElementById(sectionId);
-        if (elem) {
-          e.preventDefault();
-          elem.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
-    }
   };
 
   const isActive = (path) => {
