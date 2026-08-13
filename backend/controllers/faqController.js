@@ -3,10 +3,8 @@ const { getPool } = require('../db');
 exports.getAll = async (req, res) => {
   try {
     const pool = await getPool();
-    const isAdmin = req.query.admin === 'true';
-    const query = isAdmin ? 'SELECT * FROM faq ORDER BY id ASC' : "SELECT * FROM faq WHERE status = 'active' ORDER BY id ASC";
-    const [rows] = await pool.query(query);
-    res.json({ success: true, faqs: rows });
+    const [rows] = await pool.query("SELECT * FROM faq WHERE status = 'active' ORDER BY created_at DESC");
+    res.json({ success: true, faqs: rows || [] });
   } catch (err) {
     console.error('Get FAQs Error:', err);
     res.status(500).json({ success: false, message: 'Failed to retrieve FAQs.' });
@@ -24,7 +22,7 @@ exports.create = async (req, res) => {
       'INSERT INTO faq (question, answer, status) VALUES (?, ?, ?)',
       [question, answer, status || 'active']
     );
-    res.status(201).json({ success: true, message: 'FAQ created.', id: result.insertId });
+    res.status(201).json({ success: true, message: 'FAQ created.', id: result.insertId || result.lastID });
   } catch (err) {
     console.error('Create FAQ Error:', err);
     res.status(500).json({ success: false, message: 'Failed to create FAQ.' });
@@ -38,7 +36,7 @@ exports.update = async (req, res) => {
     const pool = await getPool();
     await pool.query(
       'UPDATE faq SET question=?, answer=?, status=? WHERE id=?',
-      [question, answer, status, id]
+      [question, answer, status || 'active', id]
     );
     res.json({ success: true, message: 'FAQ updated.' });
   } catch (err) {

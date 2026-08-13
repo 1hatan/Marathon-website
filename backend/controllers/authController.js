@@ -19,7 +19,6 @@ exports.login = async (req, res) => {
     let [rows] = await pool.query('SELECT * FROM admins WHERE LOWER(email) = ?', [cleanEmail]);
 
     if (rows.length === 0) {
-      // Search for default admin or any admin user
       [rows] = await pool.query('SELECT * FROM admins WHERE LOWER(email) = ? OR LOWER(name) LIKE "%admin%" LIMIT 1', [defaultEmail]);
     }
 
@@ -38,8 +37,8 @@ exports.login = async (req, res) => {
       if (admin) {
         await pool.query('UPDATE admins SET password_hash = ? WHERE id = ?', [newHash, admin.id]);
       } else {
-        const [result] = await pool.query('INSERT INTO admins (name, email, password_hash) VALUES (?, ?, ?)', ['Super Admin', defaultEmail, newHash]);
-        admin = { id: result.insertId || 1, name: 'Super Admin', email: defaultEmail };
+        const [result] = await pool.query('INSERT INTO admins (name, email, password_hash) VALUES (?, ?, ?)', ['Infinity Admin', defaultEmail, newHash]);
+        admin = { id: result.insertId || 1, name: 'Infinity Admin', email: defaultEmail };
       }
       isMatch = true;
     }

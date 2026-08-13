@@ -27,7 +27,7 @@ exports.getAll = async (req, res) => {
 
     if (category_id) {
       query += ` AND p.race_category_id = ?`;
-      params.push(category_id);
+      params.push(parseInt(category_id));
     }
 
     if (status) {
@@ -118,7 +118,7 @@ exports.create = async (req, res) => {
     const selectedRace = (raceRows && raceRows.length > 0) ? raceRows[0] : { id: 1, name: '3K Fun Run', distance: '3K', fee: 499 };
     finalCatId = selectedRace.id;
 
-    // 2. Format / Fallback DOB (Date of Birth) or calculate from Age
+    // 2. Format / Fallback DOB
     let validDob = dob;
     const ageVal = parseInt(age);
     if (!isNaN(ageVal) && ageVal > 0) {
@@ -129,17 +129,13 @@ exports.create = async (req, res) => {
     } else {
       try {
         const d = new Date(validDob);
-        if (!isNaN(d.getTime())) {
-          validDob = d.toISOString().split('T')[0];
-        } else {
-          validDob = '2000-01-01';
-        }
+        validDob = !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '2000-01-01';
       } catch (e) {
         validDob = '2000-01-01';
       }
     }
 
-    // 3. Fallbacks for emergency details
+    // 3. Fallbacks for emergency contact details
     const eName = emergency_name || `${full_name} Contact`;
     const eMobile = emergency_mobile || mobile;
     const eRelation = emergency_relation || 'Parent/Spouse';
@@ -154,19 +150,19 @@ exports.create = async (req, res) => {
         existing = nextCheck;
       }
     } catch (e) {
-      // Table check fallback
+      // ignore
     }
 
-    // 5. Insert into database
+    // 5. Insert into MySQL database
     const [result] = await pool.query(`
       INSERT INTO participants 
       (registration_id, full_name, email, mobile, dob, gender, blood_group, race_category_id, t_shirt_size, emergency_name, emergency_mobile, emergency_relation, medical_info, registration_status, payment_status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', 'Paid')
     `, [
       registration_id,
-      full_name,
-      email,
-      mobile,
+      full_name.trim(),
+      email.trim().toLowerCase(),
+      mobile.trim(),
       validDob,
       gender || 'Male',
       blood_group || 'O+',
@@ -180,7 +176,7 @@ exports.create = async (req, res) => {
 
     const insertedId = result.insertId || result.lastID;
 
-    // 6. Fetch inserted participant or construct fallback response object
+    // 6. Fetch inserted participant record
     let participantObj = null;
     if (insertedId) {
       const [createdRows] = await pool.query(`
@@ -217,16 +213,19 @@ exports.create = async (req, res) => {
       };
     }
 
+    console.log(`[MySQL] New participant registered: ${registration_id} - ${full_name}`);
+
     return res.status(201).json({
       success: true,
       message: 'Registration completed successfully!',
+      registration_id,
       participant: participantObj
     });
   } catch (err) {
     console.error('Create Participant Error:', err);
-    return res.status(500).json({ 
-      success: false, 
-      message: err.message || 'Failed to process registration.' 
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to process registration.'
     });
   }
 };
@@ -237,8 +236,8 @@ exports.update = async (req, res) => {
     const { registration_status, payment_status, full_name, email, mobile, t_shirt_size } = req.body;
     const pool = await getPool();
 
-    const [existing] = await pool.query('SELECT * FROM participants WHERE id = ?', [id]);
-    if (existing.length === 0) {
+    const [existing] = await pool.query('SELECT * FROM participants WHERE id = ? OR registration_id = ?', [id, id]);
+    if (!existing || existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Participant not found.' });
     }
 
@@ -254,7 +253,7 @@ exports.update = async (req, res) => {
       UPDATE participants 
       SET registration_status = ?, payment_status = ?, full_name = ?, email = ?, mobile = ?, t_shirt_size = ?
       WHERE id = ?
-    `, [newStatus, newPayment, newName, newEmail, newMobile, newSize, id]);
+    `, [newStatus, newPayment, newName, newEmail, newMobile, newSize, current.id]);
 
     res.json({ success: true, message: 'Participant updated successfully.' });
   } catch (err) {
@@ -268,7 +267,7 @@ exports.delete = async (req, res) => {
     const { id } = req.params;
     const pool = await getPool();
 
-    const [result] = await pool.query('DELETE FROM participants WHERE id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM participants WHERE id = ? OR registration_id = ?', [id, id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Participant not found.' });
     }

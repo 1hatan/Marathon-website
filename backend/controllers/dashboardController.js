@@ -37,46 +37,46 @@ exports.getStats = async (req, res) => {
     const [r3k] = await pool.query(`
       SELECT COUNT(p.id) as count 
       FROM participants p 
-      JOIN race_categories r ON p.race_category_id = r.id 
-      WHERE r.distance = '3K' OR r.name LIKE '%3K%'
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '3K' OR r.name LIKE '%3K%' OR p.race_category_id = 1
     `);
     const reg_3k = r3k[0]?.count || 0;
 
     const [r5k] = await pool.query(`
       SELECT COUNT(p.id) as count 
       FROM participants p 
-      JOIN race_categories r ON p.race_category_id = r.id 
-      WHERE r.distance = '5K' OR r.name LIKE '%5K%'
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '5K' OR r.name LIKE '%5K%' OR p.race_category_id = 2
     `);
     const reg_5k = r5k[0]?.count || 0;
 
     const [r10k] = await pool.query(`
       SELECT COUNT(p.id) as count 
       FROM participants p 
-      JOIN race_categories r ON p.race_category_id = r.id 
-      WHERE r.distance = '10K' OR r.name LIKE '%10K%'
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '10K' OR r.name LIKE '%10K%' OR p.race_category_id = 3
     `);
     const reg_10k = r10k[0]?.count || 0;
 
     const [r21k] = await pool.query(`
       SELECT COUNT(p.id) as count 
       FROM participants p 
-      JOIN race_categories r ON p.race_category_id = r.id 
-      WHERE r.distance = '21K' OR r.name LIKE '%21K%' OR r.name LIKE '%Half Marathon%'
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '21K' OR r.name LIKE '%21K%' OR r.name LIKE '%Half Marathon%' OR p.race_category_id = 4
     `);
     const reg_21k = r21k[0]?.count || 0;
 
     const [r42k] = await pool.query(`
       SELECT COUNT(p.id) as count 
       FROM participants p 
-      JOIN race_categories r ON p.race_category_id = r.id 
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
       WHERE r.distance = '42K' OR r.name LIKE '%42K%' OR r.name LIKE '%Full Marathon%'
     `);
     const reg_42k = r42k[0]?.count || 0;
 
     // 4. Total Revenue Calculation
     const [revenueRows] = await pool.query(`
-      SELECT SUM(r.fee) as total_revenue 
+      SELECT SUM(COALESCE(r.fee, 499)) as total_revenue 
       FROM participants p 
       LEFT JOIN race_categories r ON p.race_category_id = r.id 
       WHERE p.payment_status = 'Paid'
@@ -119,8 +119,8 @@ exports.getStats = async (req, res) => {
         p.t_shirt_size,
         p.registration_status,
         p.created_at,
-        r.name as race_name,
-        r.distance as race_distance
+        COALESCE(r.name, '3K Fun Run') as race_name,
+        COALESCE(r.distance, '3K') as race_distance
       FROM participants p
       LEFT JOIN race_categories r ON p.race_category_id = r.id
       ORDER BY p.created_at DESC
@@ -178,6 +178,10 @@ exports.getStats = async (req, res) => {
     });
   } catch (err) {
     console.error('Dashboard Stats Error:', err);
-    res.status(500).json({ success: false, message: 'Failed to generate dashboard statistics from database.', error: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to aggregate dashboard metrics from MySQL database.',
+      error: err.message
+    });
   }
 };

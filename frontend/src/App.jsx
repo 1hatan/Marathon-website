@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import IntroLoader from './components/IntroLoader';
 
 // Public Pages
 import HomePage from './pages/HomePage';
@@ -38,9 +39,17 @@ export default function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 
+  // Plays automatically on every fresh page load and browser refresh/reload
+  const [showIntro, setShowIntro] = useState(true);
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-offwhite text-charcoal-900">
       
+      {/* Intro loader overlay - covers viewport on initial load until finished */}
+      {showIntro && (
+        <IntroLoader onComplete={() => setShowIntro(false)} />
+      )}
+
       {/* Show Navbar & Footer only on Public Pages */}
       {!isAdminRoute && <Navbar />}
 

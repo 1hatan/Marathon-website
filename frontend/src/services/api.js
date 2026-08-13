@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api');
+// Normalize API base URL using environment variable VITE_API_URL or fallback relative /api
+let envUrl = import.meta.env.VITE_API_URL;
+if (envUrl) {
+  envUrl = envUrl.trim().replace(/\/+$/, '');
+  if (!envUrl.endsWith('/api')) {
+    envUrl = `${envUrl}/api`;
+  }
+}
+
+const API_BASE = envUrl || '/api';
 
 const api = axios.create({
   baseURL: API_BASE,

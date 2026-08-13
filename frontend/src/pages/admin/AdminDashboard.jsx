@@ -35,7 +35,7 @@ export default function AdminDashboard() {
       console.error('Error fetching dashboard stats:', err);
       const apiErrorMessage = err.response?.data?.message 
         || err.response?.data?.error 
-        || (err.code === 'ERR_NETWORK' ? 'Network Error: Express backend server on http://localhost:5000 is unreachable.' : err.message);
+        || (err.code === 'ERR_NETWORK' ? 'Network Error: Unable to connect to backend server API.' : err.message);
       setError(apiErrorMessage);
     } finally {
       setLoading(false);
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
               Real-Time Database Metrics
             </h2>
             <p className="text-xs text-gray-500 font-medium">
-              Live statistics queried directly from MySQL database tables.
+              Live statistics queried directly from MongoDB database collections.
             </p>
           </div>
 

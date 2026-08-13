@@ -8,7 +8,7 @@ let sqlite3 = null;
 try {
   sqlite3 = require('sqlite3').verbose();
 } catch (e) {
-  // SQLite optional fallback
+  // Optional sqlite3 fallback for local dev
 }
 
 const dbConfig = {
@@ -30,10 +30,12 @@ let sqliteDb = null;
 // Helper to run SQLite async query matching mysql2 interface [rows, fields]
 function querySqlite(sql, params = []) {
   return new Promise((resolve, reject) => {
+    if (!sqliteDb) {
+      return reject(new Error('SQLite database not initialized.'));
+    }
     const trimmed = sql.trim();
     const isSelect = /^SELECT/i.test(trimmed);
 
-    // Convert MySQL queries (e.g. CURDATE(), TIMESTAMP, ON DUPLICATE KEY UPDATE) if using SQLite fallback
     let modifiedSql = sql
       .replace(/CURDATE\(\)/gi, "date('now')")
       .replace(/AUTO_INCREMENT/gi, "AUTOINCREMENT")
@@ -74,8 +76,16 @@ async function getPool() {
 }
 
 async function initializeDatabase() {
-  // 1. Try MySQL connection
-  const commonPasswords = [process.env.DB_PASSWORD || 'Gayu_@2317', 'Gayu_@2317', 'Gayu_*123', '', 'root', 'password', '123456', 'MySQL80', 'admin', 'admin123', 'Password123!'];
+  // 1. Try MySQL connection using process.env credentials & common passwords fallback
+  const commonPasswords = [
+    process.env.DB_PASSWORD || 'Gayu_@2317',
+    'Gayu_@2317',
+    'root',
+    '',
+    'password',
+    '123456',
+    'admin123'
+  ];
   let mysqlConnected = false;
   let connection = null;
 
@@ -90,10 +100,10 @@ async function initializeDatabase() {
       });
       dbConfig.password = pwd;
       mysqlConnected = true;
-      console.log(`[DB] Connected to MySQL server successfully (user: ${dbConfig.user})`);
+      console.log(`[DB] Connected to MySQL server successfully (host: ${dbConfig.host}, user: ${dbConfig.user})`);
       break;
     } catch (err) {
-      // try next password
+      // try next password option
     }
   }
 
@@ -118,224 +128,171 @@ async function initializeDatabase() {
       await connection.end();
       return;
     } catch (err) {
-      console.warn('[DB] MySQL setup error, attempting fallback driver:', err.message);
+      console.warn('[DB] MySQL setup warning, attempting fallback driver:', err.message);
       if (connection) await connection.end();
     }
   }
 
-  // 2. Fallback to SQLite if MySQL fails or isn't available with current passwords
-  console.log('[DB] Using SQLite embedded engine as local database provider...');
-  activeDriver = 'sqlite';
+  // 2. Fallback to SQLite if MySQL is unavailable locally
+  if (sqlite3) {
+    console.log('[DB] Using SQLite embedded engine as database provider...');
+    activeDriver = 'sqlite';
 
-  const dbDir = path.join(__dirname, '../database');
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-  }
+    const dbDir = path.join(__dirname, '../database');
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
 
-  const sqlitePath = path.join(dbDir, 'infinity_run.sqlite');
-  sqliteDb = new sqlite3.Database(sqlitePath);
+    const sqlitePath = path.join(dbDir, 'infinity_run.sqlite');
+    sqliteDb = new sqlite3.Database(sqlitePath);
 
-  // Initialize SQLite tables
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS admins (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS race_categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      distance TEXT NOT NULL,
-      description TEXT,
-      age_limit TEXT,
-      fee DECIMAL(10, 2) NOT NULL,
-      status TEXT DEFAULT 'active',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS participants (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      registration_id TEXT UNIQUE NOT NULL,
-      full_name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      mobile TEXT NOT NULL,
-      dob DATE NOT NULL,
-      gender TEXT NOT NULL,
-      blood_group TEXT NOT NULL,
-      race_category_id INTEGER NOT NULL,
-      t_shirt_size TEXT NOT NULL,
-      emergency_name TEXT NOT NULL,
-      emergency_mobile TEXT NOT NULL,
-      emergency_relation TEXT NOT NULL,
-      medical_info TEXT,
-      registration_status TEXT DEFAULT 'Confirmed',
-      payment_status TEXT DEFAULT 'Paid',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS sponsors (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      logo TEXT NOT NULL,
-      tier TEXT NOT NULL,
-      website TEXT,
-      status TEXT DEFAULT 'active',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS gallery (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      image_url TEXT NOT NULL,
-      title TEXT,
-      status TEXT DEFAULT 'active',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS faq (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      question TEXT NOT NULL,
-      answer TEXT NOT NULL,
-      status TEXT DEFAULT 'active',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS contact_messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      phone TEXT,
-      subject TEXT,
-      message TEXT NOT NULL,
-      status TEXT DEFAULT 'Unread',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await querySqlite(`
-    CREATE TABLE IF NOT EXISTS event_settings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      event_name TEXT DEFAULT 'Infinity Run',
-      event_date TEXT DEFAULT 'Sunday, November 15, 2026',
-      venue TEXT DEFAULT 'Salem Sports Complex & Mahatma Gandhi Stadium',
-      location TEXT DEFAULT 'Salem, Tamil Nadu',
-      reporting_time TEXT DEFAULT '05:00 AM',
-      flagoff_time TEXT DEFAULT '05:30 AM (21K) | 06:00 AM (10K) | 06:30 AM (5K/3K)',
-      registration_deadline TEXT DEFAULT 'November 10, 2026',
-      contact_email TEXT DEFAULT 'saleminfo@infinityrun.org',
-      contact_phone TEXT DEFAULT '+91 98765 43210',
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  // Seed SQLite default data
-  const [raceRows] = await querySqlite('SELECT COUNT(*) as count FROM race_categories');
-  if (raceRows[0].count === 0) {
     await querySqlite(`
-      INSERT INTO race_categories (id, name, distance, description, age_limit, fee, status) VALUES
-      (1, '3K Fun Run', '3K', 'Ideal for beginners, families, and casual runners looking to be part of the movement.', 'Open to all ages', 499.00, 'active'),
-      (2, '5K Run', '5K', 'A popular distance for fitness enthusiasts testing their endurance and speed.', 'Min. 12 years old', 699.00, 'active'),
-      (3, '10K Challenge', '10K', 'A timed competitive race for seasoned runners seeking speed and endurance.', 'Min. 15 years old', 899.00, 'active'),
-      (4, '21K Half Marathon', '21K', 'The flagship endurance test with chip timing, pace pacers, and prize purse.', 'Min. 18 years old', 1199.00, 'active');
+      CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-  }
 
-  const [settingsRows] = await querySqlite('SELECT COUNT(*) as count FROM event_settings');
-  if (settingsRows[0].count === 0) {
     await querySqlite(`
-      INSERT INTO event_settings (id, event_name, event_date, venue, location, reporting_time, flagoff_time, registration_deadline, contact_email, contact_phone)
-      VALUES (1, 'Infinity Run', 'Sunday, November 15, 2026', 'Salem Sports Complex & Mahatma Gandhi Stadium', 'Salem, Tamil Nadu', '05:00 AM', '05:30 AM (21K) | 06:00 AM (10K) | 06:30 AM (5K/3K)', 'November 10, 2026', 'saleminfo@infinityrun.org', '+91 98765 43210');
+      CREATE TABLE IF NOT EXISTS race_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        distance TEXT NOT NULL,
+        description TEXT,
+        age_limit TEXT,
+        fee REAL NOT NULL,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-  } else {
-    await querySqlite(`
-      UPDATE event_settings SET venue = 'Salem Sports Complex & Mahatma Gandhi Stadium', location = 'Salem, Tamil Nadu', contact_email = 'saleminfo@infinityrun.org', contact_phone = '+91 98765 43210' WHERE id = 1;
-    `);
-  }
 
-  const [faqRows] = await querySqlite('SELECT COUNT(*) as count FROM faq');
-  if (faqRows[0].count === 0) {
     await querySqlite(`
-      INSERT INTO faq (question, answer, status) VALUES
-      ('Who can participate in Infinity Run?', 'Infinity Run is open to runners of all fitness levels. The 3K Fun Run welcomes all ages, while timed races (5K, 10K, 21K) have minimum age limits of 12, 15, and 18 years respectively.', 'active'),
-      ('How do I receive my registration confirmation?', 'Upon completing the multi-step online registration, you will receive an instant on-screen digital registration pass with a unique Registration ID (e.g. INF-2026-XXXX). An email confirmation will also be dispatched.', 'active'),
-      ('What is included in the registration fee?', 'Your registration fee includes an official dry-fit running T-shirt, personalized bib with timing chip (for 5K, 10K, 21K), finisher medal, e-certificate, hot breakfast refreshments, and hydration support along the route.', 'active'),
-      ('Where and when can I collect my Bib and Race Kit?', 'Race kit collection will take place at the Marathon Expo (Salem Sports Complex, Salem, Tamil Nadu) on Friday, Nov 13, and Saturday, Nov 14, from 10:00 AM to 6:00 PM. Please bring your registration confirmation ID and photo ID.', 'active');
+      CREATE TABLE IF NOT EXISTS participants (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        registration_id TEXT UNIQUE NOT NULL,
+        full_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        mobile TEXT NOT NULL,
+        dob TEXT NOT NULL,
+        gender TEXT NOT NULL,
+        blood_group TEXT NOT NULL,
+        race_category_id INTEGER NOT NULL,
+        t_shirt_size TEXT NOT NULL,
+        emergency_name TEXT NOT NULL,
+        emergency_mobile TEXT NOT NULL,
+        emergency_relation TEXT NOT NULL,
+        medical_info TEXT,
+        registration_status TEXT DEFAULT 'Confirmed',
+        payment_status TEXT DEFAULT 'Paid',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-  }
 
-  const [sponsorRows] = await querySqlite('SELECT COUNT(*) as count FROM sponsors');
-  if (sponsorRows[0].count === 0) {
     await querySqlite(`
-      INSERT INTO sponsors (name, logo, tier, website, status) VALUES
-      ('Apex Athletics', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&auto=format&fit=crop&q=80', 'Title Sponsor', 'https://apexathletics.com', 'active'),
-      ('HydroMax Hydration', 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&auto=format&fit=crop&q=80', 'Gold Sponsor', 'https://hydromax.com', 'active'),
-      ('FitNutrition Co.', 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&auto=format&fit=crop&q=80', 'Gold Sponsor', 'https://fitnutrition.com', 'active'),
-      ('Pulse Wearables', 'https://images.unsplash.com/photo-1510017803434-a899398421b3?w=300&auto=format&fit=crop&q=80', 'Silver Sponsor', 'https://pulsewearables.com', 'active'),
-      ('City HealthCare', 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=300&auto=format&fit=crop&q=80', 'Supporting Partner', 'https://cityhealthcare.org', 'active');
+      CREATE TABLE IF NOT EXISTS sponsors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        logo TEXT NOT NULL,
+        tier TEXT NOT NULL,
+        website TEXT,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-  }
 
-  const [galleryRows] = await querySqlite('SELECT COUNT(*) as count FROM gallery');
-  if (galleryRows[0].count === 0) {
     await querySqlite(`
-      INSERT INTO gallery (image_url, title, status) VALUES
-      ('https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&auto=format&fit=crop&q=80', 'Marathon Flag Off', 'active'),
-      ('https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&auto=format&fit=crop&q=80', 'Runners at Sunrise', 'active'),
-      ('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80', 'Finisher Celebration', 'active'),
-      ('https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&auto=format&fit=crop&q=80', 'Hydration Point Joy', 'active'),
-      ('https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&auto=format&fit=crop&q=80', 'Medal Presentation', 'active'),
-      ('https://images.unsplash.com/photo-1517649763962-0c623266010b?w=800&auto=format&fit=crop&q=80', 'Community Spirit', 'active');
+      CREATE TABLE IF NOT EXISTS gallery (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_url TEXT NOT NULL,
+        title TEXT,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-  }
 
-  await seedAdmin(poolWrapper);
-  console.log('[DB] Local embedded database setup completed.');
+    await querySqlite(`
+      CREATE TABLE IF NOT EXISTS faq (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await querySqlite(`
+      CREATE TABLE IF NOT EXISTS contact_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT,
+        subject TEXT,
+        message TEXT NOT NULL,
+        status TEXT DEFAULT 'Unread',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await querySqlite(`
+      CREATE TABLE IF NOT EXISTS event_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_name TEXT DEFAULT 'Infinity Run',
+        event_date TEXT DEFAULT 'Sunday, November 15, 2026',
+        venue TEXT DEFAULT 'Salem Sports Complex & Mahatma Gandhi Stadium',
+        location TEXT DEFAULT 'Salem, Tamil Nadu',
+        reporting_time TEXT DEFAULT '05:00 AM',
+        flagoff_time TEXT DEFAULT '05:30 AM (21K) | 06:00 AM (10K) | 06:30 AM (5K/3K)',
+        registration_deadline TEXT DEFAULT 'November 10, 2026',
+        contact_email TEXT DEFAULT 'saleminfo@infinityrun.org',
+        contact_phone TEXT DEFAULT '+91 98765 43210',
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Seed default race categories if empty
+    const [races] = await querySqlite('SELECT COUNT(*) as count FROM race_categories');
+    if (!races || !races[0] || races[0].count === 0) {
+      await querySqlite(`
+        INSERT INTO race_categories (id, name, distance, description, age_limit, fee, status) VALUES
+        (1, '3K Fun Run', '3K', 'Ideal for beginners, families, and casual runners looking to be part of the movement.', 'Open to all ages', 499.00, 'active'),
+        (2, '5K Run', '5K', 'A popular distance for fitness enthusiasts testing their endurance and speed.', 'Min. 12 years old', 699.00, 'active'),
+        (3, '10K Challenge', '10K', 'A timed competitive race for seasoned runners seeking speed and endurance.', 'Min. 15 years old', 899.00, 'active'),
+        (4, '21K Half Marathon', '21K', 'The flagship endurance test with chip timing, pace pacers, and prize purse.', 'Min. 18 years old', 1199.00, 'active');
+      `);
+    }
+
+    await seedAdmin(poolWrapper);
+    console.log('[DB] SQLite database initialized successfully.');
+  }
 }
 
 async function seedAdmin(pool) {
   try {
     const defaultEmail = (process.env.ADMIN_DEFAULT_EMAIL || 'admin@infinityrun.com').trim().toLowerCase();
     const defaultPass = process.env.ADMIN_DEFAULT_PASS || 'admin123';
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(defaultPass, salt);
 
     const [rows] = await pool.query('SELECT * FROM admins WHERE LOWER(email) = ?', [defaultEmail]);
     if (rows.length === 0) {
+      const hashedPassword = await bcrypt.hash(defaultPass, 10);
       await pool.query(
         'INSERT INTO admins (name, email, password_hash) VALUES (?, ?, ?)',
-        ['Super Admin', defaultEmail, hash]
+        ['Infinity Admin', defaultEmail, hashedPassword]
       );
-      console.log(`[DB] Created default admin user: ${defaultEmail} / ${defaultPass}`);
-    } else {
-      await pool.query(
-        'UPDATE admins SET password_hash = ? WHERE LOWER(email) = ?',
-        [hash, defaultEmail]
-      );
-      console.log(`[DB] Refreshed credentials for default admin: ${defaultEmail}`);
+      console.log(`[DB Seed] Default admin created: ${defaultEmail}`);
     }
   } catch (err) {
-    console.error('[DB] Admin seeding error:', err);
+    console.error('[DB Seed] Error seeding admin:', err.message);
   }
 }
 
 module.exports = {
   getPool,
-  initializeDatabase
+  initializeDatabase,
+  poolWrapper
 };

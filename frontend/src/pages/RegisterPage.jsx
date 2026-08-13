@@ -116,8 +116,9 @@ export default function RegisterPage() {
 
       const res = await submitRegistration(payload);
       if (res && res.success) {
+        const p = res.participant || {};
         setRegistrationPass({
-          registration_id: res.registration_id,
+          registration_id: res.registration_id || p.registration_id || 'INF-2026-CONFIRMED',
           full_name: payload.full_name,
           race_name: selectedRace.name,
           race_distance: selectedRace.distance,
@@ -127,31 +128,14 @@ export default function RegisterPage() {
           registration_status: 'Confirmed'
         });
       } else {
-        const passId = `INF-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        setRegistrationPass({
-          registration_id: passId,
-          full_name: payload.full_name,
-          race_name: selectedRace.name,
-          race_distance: selectedRace.distance,
-          t_shirt_size: payload.t_shirt_size,
-          mobile: payload.mobile,
-          blood_group: payload.blood_group,
-          registration_status: 'Confirmed'
-        });
+        setErrorMsg(res?.message || 'Registration failed. Please try again.');
       }
     } catch (err) {
       console.error('Registration submission error:', err);
-      const passId = `INF-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      setRegistrationPass({
-        registration_id: passId,
-        full_name: formData.full_name || 'Runner',
-        race_name: selectedRace.name,
-        race_distance: selectedRace.distance,
-        t_shirt_size: formData.t_shirt_size || 'M',
-        mobile: formData.mobile || '—',
-        blood_group: formData.blood_group || 'O+',
-        registration_status: 'Confirmed'
-      });
+      const apiErr = err.response?.data?.message
+        || err.response?.data?.error
+        || (err.code === 'ERR_NETWORK' ? 'Unable to connect to registration server. Please check your internet connection or backend configuration.' : err.message || 'Registration submission failed.');
+      setErrorMsg(apiErr);
     } finally {
       setSubmitting(false);
     }
