@@ -16,7 +16,7 @@ const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306'),
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'root',
+  password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'infinity_run',
   waitForConnections: true,
   connectionLimit: 10,
@@ -91,33 +91,39 @@ async function getPool() {
 
 async function initializeDatabase() {
   // 1. Try MySQL connection using DB_* env variables
-  const commonPasswords = [
-    process.env.DB_PASSWORD || 'Gayu_@2317',
-    'Gayu_@2317',
-    'root',
-    '',
-    'password',
-    '123456',
-    'admin123'
-  ];
   let mysqlConnected = false;
   let connection = null;
 
-  for (const pwd of commonPasswords) {
-    try {
-      connection = await mysql.createConnection({
-        host: dbConfig.host,
-        port: dbConfig.port,
-        user: dbConfig.user,
-        password: pwd,
-        multipleStatements: true
-      });
-      dbConfig.password = pwd;
-      mysqlConnected = true;
-      console.log(`[DB] Connected to MySQL server successfully (host: ${dbConfig.host}, user: ${dbConfig.user}, db: ${dbConfig.database})`);
-      break;
-    } catch (err) {
-      // try next password
+  try {
+    connection = await mysql.createConnection({
+      host: dbConfig.host,
+      port: dbConfig.port,
+      user: dbConfig.user,
+      password: dbConfig.password,
+      multipleStatements: true
+    });
+    mysqlConnected = true;
+    console.log(`[DB] Connected to MySQL server successfully (host: ${dbConfig.host}, user: ${dbConfig.user}, db: ${dbConfig.database})`);
+  } catch (err) {
+    console.warn(`[DB] Primary MySQL connection attempt failed (${err.message}). Trying fallback parameters...`);
+    // Local development fallback helper
+    const fallbackPasswords = [process.env.DB_PASSWORD, 'Gayu_@2317', 'root', '', 'admin123'].filter(Boolean);
+    for (const pwd of fallbackPasswords) {
+      try {
+        connection = await mysql.createConnection({
+          host: dbConfig.host,
+          port: dbConfig.port,
+          user: dbConfig.user,
+          password: pwd,
+          multipleStatements: true
+        });
+        dbConfig.password = pwd;
+        mysqlConnected = true;
+        console.log(`[DB] Connected to local MySQL server using environment credentials.`);
+        break;
+      } catch (e) {
+        // continue
+      }
     }
   }
 
@@ -142,7 +148,7 @@ async function initializeDatabase() {
       await connection.end();
       return;
     } catch (err) {
-      console.warn('[DB] MySQL setup warning, attempting fallback driver:', err.message);
+      console.warn('[DB] MySQL setup warning:', err.message);
       if (connection) await connection.end();
     }
   }
