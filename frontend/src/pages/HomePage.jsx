@@ -179,39 +179,6 @@ export default function HomePage() {
 
       </section>
 
-      {/* 3. EVENT KEY DETAILS HOME BANNER */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-black text-white rounded-3xl p-8 sm:p-10 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
-          
-          <div className="space-y-3 text-center md:text-left">
-            <span className="text-xs font-black tracking-widest text-rock-yellow uppercase font-outfit">Official Marathon Details</span>
-            <h2 className="text-2xl sm:text-4xl font-black uppercase font-outfit tracking-tight">
-              {settings.venue}
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-300 max-w-xl font-medium">
-              {settings.event_date} • {settings.location} • Flag-off starting from {settings.reporting_time}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-            <Link
-              to="/about"
-              className="bg-white/10 hover:bg-white/20 text-white font-extrabold px-6 py-3.5 rounded-full text-xs transition-all border border-white/20 font-outfit uppercase tracking-wider"
-            >
-              Event Info
-            </Link>
-            <Link
-              to="/register"
-              className="bg-rock-yellow hover:bg-rock-yellowHover text-black font-extrabold px-7 py-3.5 rounded-full text-xs transition-all shadow-md shrink-0 flex items-center gap-1.5 font-outfit uppercase tracking-wider"
-            >
-              <span>REGISTER NOW</span>
-              <ArrowUpRight className="w-4 h-4 stroke-[3]" />
-            </Link>
-          </div>
-
-        </div>
-      </section>
-
     </div>
   );
 }
