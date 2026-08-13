@@ -1,3 +1,13 @@
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {
+  // Ignore fallback error if DNS custom servers unsupported
+}
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const path = require('path');
