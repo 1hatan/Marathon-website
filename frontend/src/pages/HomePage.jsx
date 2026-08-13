@@ -6,6 +6,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { fetchSettings, fetchRaces } from '../services/api';
+import RunningMan from '../components/RunningMan';
 
 export default function HomePage() {
   const [settings, setSettings] = useState({
@@ -47,45 +48,15 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-black font-sans pb-16 space-y-12 sm:space-y-16">
 
-      {/* 1. HERO SECTION — FULL-WIDTH HERO CARD */}
+      {/* 1. HERO SECTION — RUNNING MAN ANIMATION */}
       <section className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        <div className="relative rounded-3xl sm:rounded-[40px] overflow-hidden shadow-2xl border-4 border-white min-h-[70vh] sm:min-h-[580px] lg:min-h-[640px] flex items-center justify-center group bg-gray-900 text-white">
-          <img
-            src="https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=1600&auto=format&fit=crop&q=80"
-            alt="Infinity Run Marathon Hero"
-            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-85"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/30" />
-
+        <div className="relative rounded-3xl sm:rounded-[40px] overflow-hidden shadow-2xl border-4 border-white min-h-[70vh] sm:min-h-[580px] lg:min-h-[640px] flex items-center justify-center bg-gray-900 text-white">
+          
           {/* Hero Content Overlay */}
-          <div className="relative z-10 max-w-4xl mx-auto text-center px-6 py-12 flex flex-col items-center space-y-6">
+          <div className="relative z-10 max-w-4xl mx-auto text-center px-6 py-8 flex flex-col items-center justify-center space-y-6">
             
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-xs font-black uppercase tracking-widest text-rock-yellow font-outfit shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-rock-yellow animate-pulse" />
-              <span>INFINITY RUN 2026 • SALEM, TAMIL NADU</span>
-            </div>
-
-            {/* Prominent HALF MARATHON 5K Headline */}
-            <div className="space-y-2 font-outfit">
-              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                <span className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-white drop-shadow-md">
-                  HALF
-                </span>
-                <span className="text-3xl sm:text-5xl lg:text-6xl font-extrabold uppercase text-rock-yellow drop-shadow-md">
-                  MARATHON
-                </span>
-                <span className="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight text-white drop-shadow-md">
-                  5K
-                </span>
-              </div>
-              <p className="text-sm sm:text-xl font-black tracking-widest text-gray-200 uppercase font-sans pt-2">
-                3K • 5K • 10K • 21K RUNNING SERIES
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-base font-medium text-gray-300 max-w-2xl leading-relaxed">
-              Every Step Creates a Better Tomorrow. Join thousands of runners in Salem's premier marathon event with chip timing, scenic routes & vibrant community spirit.
-            </p>
+            {/* Animated Running Man */}
+            <RunningMan />
 
             {/* Hero CTAs */}
             <div className="pt-2 flex flex-col sm:flex-row items-center gap-4">
