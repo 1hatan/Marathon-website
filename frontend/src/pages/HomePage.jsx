@@ -48,7 +48,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-white text-black font-sans pb-16 space-y-12 sm:space-y-16">
 
       {/* 1. HERO SECTION — FULL-WIDTH HERO CARD */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         <div className="relative rounded-3xl sm:rounded-[40px] overflow-hidden shadow-2xl border-4 border-white min-h-[70vh] sm:min-h-[580px] lg:min-h-[640px] flex items-center justify-center group bg-gray-900 text-white">
           <img
             src="https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=1600&auto=format&fit=crop&q=80"
@@ -110,7 +110,7 @@ export default function HomePage() {
       </section>
 
       {/* 2. STATS & OFFICIAL REGISTRATION BAR MATCHING SCREENSHOT */}
-      <section className="w-full px-4 sm:px-6 lg:px-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           
           <div className="md:col-span-6 bg-gray-900 text-white rounded-3xl p-5 relative overflow-hidden flex items-center justify-between shadow-sm">
@@ -155,7 +155,7 @@ export default function HomePage() {
       </section>
 
       {/* 3. RACE CATEGORIES HOME SUMMARY SECTION */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 space-y-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
@@ -164,13 +164,9 @@ export default function HomePage() {
               Choose Your <span className="text-rock-yellow">Challenge</span>
             </h2>
           </div>
-          <Link
-            to="/events"
-            className="inline-flex items-center gap-1.5 text-xs font-black uppercase font-outfit tracking-wider text-black hover:text-rock-cyan transition-colors"
-          >
-            <span>View All Event Details</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </Link>
+          <p className="text-xs text-gray-500 font-medium max-w-md text-left md:text-right leading-relaxed">
+            All categories include an official dry-fit Infinity Run T-shirt, personalized timing bib, finisher medal, breakfast, and medical support.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -217,7 +213,7 @@ export default function HomePage() {
       </section>
 
       {/* 4. INFINITY RUN BRANDING & RUNNING ATHLETE FEATURE SECTION */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 py-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
           {/* Left Column: Title, Description, Sponsor Logos, Hazard Tape */}

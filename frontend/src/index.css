@@ -8,27 +8,37 @@
   }
 }
 
-/* Global Full-Width Content Container System */
+/* Global Content Container System (Matches Reference Screenshot max-w-7xl) */
 .container,
 .section-container,
 .main-content,
 .page-container {
   width: 100%;
-  max-width: 100%;
+  max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: 16px;
+  padding-right: 16px;
   box-sizing: border-box;
 }
 
-@media (max-width: 640px) {
+@media (min-width: 640px) {
   .container,
   .section-container,
   .main-content,
   .page-container {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container,
+  .section-container,
+  .main-content,
+  .page-container {
+    padding-left: 32px;
+    padding-right: 32px;
   }
 }
 

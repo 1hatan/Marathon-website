@@ -60,7 +60,7 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-white text-black font-sans pb-16">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
 
         {/* Header Title with Home Page Typography & Colors */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
