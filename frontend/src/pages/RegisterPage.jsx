@@ -233,7 +233,7 @@ export default function RegisterPage() {
   // FORM VIEW WITH CLEAN ORIGINAL LAYOUT + HOME PAGE COLORS & FONTS
   return (
     <div className="min-h-screen bg-white text-black font-sans py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-[1300px] mx-auto space-y-8">
+      <div className="w-full space-y-8">
         
         {/* Header Title */}
         <div className="text-center max-w-2xl mx-auto space-y-2">

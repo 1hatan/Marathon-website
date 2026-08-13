@@ -8,29 +8,18 @@
   }
 }
 
-/* Global 1300px Content Container System */
+/* Global Full-Width Content Container System */
 .container,
 .section-container,
 .main-content,
 .page-container {
   width: 100%;
-  max-width: 1300px;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 24px;
+  padding-right: 24px;
   box-sizing: border-box;
-}
-
-@media (max-width: 1024px) {
-  .container,
-  .section-container,
-  .main-content,
-  .page-container {
-    width: calc(100% - 40px);
-    padding-left: 0;
-    padding-right: 0;
-  }
 }
 
 @media (max-width: 640px) {
@@ -38,9 +27,8 @@
   .section-container,
   .main-content,
   .page-container {
-    width: calc(100% - 32px);
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 
