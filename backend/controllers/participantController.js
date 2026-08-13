@@ -1,4 +1,4 @@
-const { getPool } = require('../db');
+const { Participant, RaceCategory } = require('../db');
 
 // Helper to generate registration ID
 function generateRegistrationId() {
@@ -9,41 +9,46 @@ function generateRegistrationId() {
 exports.getAll = async (req, res) => {
   try {
     const { search, category_id, status, t_shirt_size } = req.query;
-    const pool = await getPool();
-
-    let query = `
-      SELECT p.*, r.name as race_name, r.distance as race_distance, r.fee as race_fee
-      FROM participants p
-      LEFT JOIN race_categories r ON p.race_category_id = r.id
-      WHERE 1=1
-    `;
-    const params = [];
+    const filter = {};
 
     if (search) {
-      query += ` AND (p.full_name LIKE ? OR p.email LIKE ? OR p.mobile LIKE ? OR p.registration_id LIKE ?)`;
-      const searchParam = `%${search}%`;
-      params.push(searchParam, searchParam, searchParam, searchParam);
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { full_name: searchRegex },
+        { email: searchRegex },
+        { mobile: searchRegex },
+        { registration_id: searchRegex }
+      ];
     }
 
     if (category_id) {
-      query += ` AND p.race_category_id = ?`;
-      params.push(parseInt(category_id));
+      filter.race_category_id = parseInt(category_id);
     }
 
     if (status) {
-      query += ` AND p.registration_status = ?`;
-      params.push(status);
+      filter.registration_status = status;
     }
 
     if (t_shirt_size) {
-      query += ` AND p.t_shirt_size = ?`;
-      params.push(t_shirt_size);
+      filter.t_shirt_size = t_shirt_size;
     }
 
-    query += ` ORDER BY p.created_at DESC`;
+    const participants = await Participant.find(filter).sort({ created_at: -1 }).lean();
+    const races = await RaceCategory.find().lean();
+    const raceMap = new Map(races.map(r => [r.id, r]));
 
-    const [rows] = await pool.query(query, params);
-    res.json({ success: true, count: rows.length, participants: rows || [] });
+    const enriched = participants.map(p => {
+      const race = raceMap.get(p.race_category_id) || {};
+      return {
+        ...p,
+        id: p._id.toString(),
+        race_name: race.name || '3K Fun Run',
+        race_distance: race.distance || '3K',
+        race_fee: race.fee || 499
+      };
+    });
+
+    res.json({ success: true, count: enriched.length, participants: enriched });
   } catch (err) {
     console.error('Get Participants Error:', err);
     res.status(500).json({ success: false, message: 'Failed to retrieve participants.', error: err.message });
@@ -53,19 +58,29 @@ exports.getAll = async (req, res) => {
 exports.getById = async (req, res) => {
   try {
     const { id } = req.params;
-    const pool = await getPool();
-    const [rows] = await pool.query(`
-      SELECT p.*, r.name as race_name, r.distance as race_distance, r.fee as race_fee
-      FROM participants p
-      LEFT JOIN race_categories r ON p.race_category_id = r.id
-      WHERE p.id = ? OR p.registration_id = ?
-    `, [id, id]);
+    let participant = null;
 
-    if (rows.length === 0) {
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      participant = await Participant.findById(id).lean();
+    }
+    if (!participant) {
+      participant = await Participant.findOne({ registration_id: id }).lean();
+    }
+
+    if (!participant) {
       return res.status(404).json({ success: false, message: 'Participant registration not found.' });
     }
 
-    res.json({ success: true, participant: rows[0] });
+    const race = await RaceCategory.findOne({ id: participant.race_category_id }).lean();
+    const enriched = {
+      ...participant,
+      id: participant._id.toString(),
+      race_name: race?.name || '3K Fun Run',
+      race_distance: race?.distance || '3K',
+      race_fee: race?.fee || 499
+    };
+
+    res.json({ success: true, participant: enriched });
   } catch (err) {
     console.error('Get Participant Error:', err);
     res.status(500).json({ success: false, message: 'Failed to retrieve participant details.', error: err.message });
@@ -94,28 +109,30 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter Full Name, Email, and Phone Number.' });
     }
 
-    const pool = await getPool();
-
-    // 1. Resolve race category ID robustly
+    // 1. Resolve race category
     let finalCatId = parseInt(race_category_id);
-    let raceRows = [];
+    let selectedRace = null;
 
     if (!isNaN(finalCatId)) {
-      const [rRows] = await pool.query('SELECT * FROM race_categories WHERE id = ?', [finalCatId]);
-      raceRows = rRows;
+      selectedRace = await RaceCategory.findOne({ id: finalCatId }).lean();
     }
 
-    if (!raceRows || raceRows.length === 0) {
-      const [rRows] = await pool.query('SELECT * FROM race_categories WHERE distance = ? OR name LIKE ?', [race_category_id, `%${race_category_id}%`]);
-      raceRows = rRows;
+    if (!selectedRace) {
+      selectedRace = await RaceCategory.findOne({
+        $or: [
+          { distance: race_category_id },
+          { name: new RegExp(String(race_category_id || ''), 'i') }
+        ]
+      }).lean();
     }
 
-    if (!raceRows || raceRows.length === 0) {
-      const [rRows] = await pool.query('SELECT * FROM race_categories LIMIT 1');
-      raceRows = rRows;
+    if (!selectedRace) {
+      selectedRace = await RaceCategory.findOne().lean();
     }
 
-    const selectedRace = (raceRows && raceRows.length > 0) ? raceRows[0] : { id: 1, name: '3K Fun Run', distance: '3K', fee: 499 };
+    if (!selectedRace) {
+      selectedRace = { id: 1, name: '3K Fun Run', distance: '3K', fee: 499 };
+    }
     finalCatId = selectedRace.id;
 
     // 2. Format / Fallback DOB
@@ -135,85 +152,47 @@ exports.create = async (req, res) => {
       }
     }
 
-    // 3. Fallbacks for emergency contact details
+    // 3. Fallbacks for emergency contact
     const eName = emergency_name || `${full_name} Contact`;
     const eMobile = emergency_mobile || mobile;
     const eRelation = emergency_relation || 'Parent/Spouse';
 
     // 4. Unique Registration ID
     let registration_id = generateRegistrationId();
-    try {
-      let [existing] = await pool.query('SELECT id FROM participants WHERE registration_id = ?', [registration_id]);
-      while (existing && existing.length > 0) {
-        registration_id = generateRegistrationId();
-        const [nextCheck] = await pool.query('SELECT id FROM participants WHERE registration_id = ?', [registration_id]);
-        existing = nextCheck;
-      }
-    } catch (e) {
-      // ignore
+    let existing = await Participant.findOne({ registration_id });
+    while (existing) {
+      registration_id = generateRegistrationId();
+      existing = await Participant.findOne({ registration_id });
     }
 
-    // 5. Insert into MySQL database
-    const [result] = await pool.query(`
-      INSERT INTO participants 
-      (registration_id, full_name, email, mobile, dob, gender, blood_group, race_category_id, t_shirt_size, emergency_name, emergency_mobile, emergency_relation, medical_info, registration_status, payment_status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', 'Paid')
-    `, [
+    // 5. Create Participant document in MongoDB
+    const newParticipant = await Participant.create({
       registration_id,
-      full_name.trim(),
-      email.trim().toLowerCase(),
-      mobile.trim(),
-      validDob,
-      gender || 'Male',
-      blood_group || 'O+',
-      finalCatId,
-      t_shirt_size || 'M',
-      eName,
-      eMobile,
-      eRelation,
-      medical_info || null
-    ]);
+      full_name: full_name.trim(),
+      email: email.trim().toLowerCase(),
+      mobile: mobile.trim(),
+      dob: validDob,
+      gender: gender || 'Male',
+      blood_group: blood_group || 'O+',
+      race_category_id: finalCatId,
+      t_shirt_size: t_shirt_size || 'M',
+      emergency_name: eName,
+      emergency_mobile: eMobile,
+      emergency_relation: eRelation,
+      medical_info: medical_info || null,
+      registration_status: 'Confirmed',
+      payment_status: 'Paid'
+    });
 
-    const insertedId = result.insertId || result.lastID;
+    const participantObj = {
+      ...newParticipant.toObject(),
+      id: newParticipant._id.toString(),
+      race_name: selectedRace.name,
+      race_distance: selectedRace.distance,
+      race_fee: selectedRace.fee
+    };
 
-    // 6. Fetch inserted participant record
-    let participantObj = null;
-    if (insertedId) {
-      const [createdRows] = await pool.query(`
-        SELECT p.*, r.name as race_name, r.distance as race_distance, r.fee as race_fee
-        FROM participants p
-        LEFT JOIN race_categories r ON p.race_category_id = r.id
-        WHERE p.id = ?
-      `, [insertedId]);
-      if (createdRows && createdRows.length > 0) {
-        participantObj = createdRows[0];
-      }
-    }
-
-    if (!participantObj) {
-      participantObj = {
-        id: insertedId || Date.now(),
-        registration_id,
-        full_name,
-        email,
-        mobile,
-        dob: validDob,
-        gender: gender || 'Male',
-        blood_group: blood_group || 'O+',
-        race_category_id: finalCatId,
-        race_name: selectedRace.name,
-        race_distance: selectedRace.distance,
-        race_fee: selectedRace.fee,
-        t_shirt_size: t_shirt_size || 'M',
-        emergency_name: eName,
-        emergency_mobile: eMobile,
-        emergency_relation: eRelation,
-        registration_status: 'Confirmed',
-        payment_status: 'Paid'
-      };
-    }
-
-    console.log(`[MySQL] New participant registered: ${registration_id} - ${full_name}`);
+    console.log(`[MongoDB] New participant registered: ${registration_id} - ${full_name}`);
 
     return res.status(201).json({
       success: true,
@@ -234,28 +213,28 @@ exports.update = async (req, res) => {
   try {
     const { id } = req.params;
     const { registration_status, payment_status, full_name, email, mobile, t_shirt_size } = req.body;
-    const pool = await getPool();
 
-    const [existing] = await pool.query('SELECT * FROM participants WHERE id = ? OR registration_id = ?', [id, id]);
-    if (!existing || existing.length === 0) {
+    let filter = {};
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      filter._id = id;
+    } else {
+      filter.registration_id = id;
+    }
+
+    const updateFields = { updated_at: Date.now() };
+    if (registration_status) updateFields.registration_status = registration_status;
+    if (payment_status) updateFields.payment_status = payment_status;
+    if (full_name) updateFields.full_name = full_name;
+    if (email) updateFields.email = email;
+    if (mobile) updateFields.mobile = mobile;
+    if (t_shirt_size) updateFields.t_shirt_size = t_shirt_size;
+
+    const updated = await Participant.findOneAndUpdate(filter, updateFields, { new: true });
+    if (!updated) {
       return res.status(404).json({ success: false, message: 'Participant not found.' });
     }
 
-    const current = existing[0];
-    const newStatus = registration_status || current.registration_status;
-    const newPayment = payment_status || current.payment_status;
-    const newName = full_name || current.full_name;
-    const newEmail = email || current.email;
-    const newMobile = mobile || current.mobile;
-    const newSize = t_shirt_size || current.t_shirt_size;
-
-    await pool.query(`
-      UPDATE participants 
-      SET registration_status = ?, payment_status = ?, full_name = ?, email = ?, mobile = ?, t_shirt_size = ?
-      WHERE id = ?
-    `, [newStatus, newPayment, newName, newEmail, newMobile, newSize, current.id]);
-
-    res.json({ success: true, message: 'Participant updated successfully.' });
+    res.json({ success: true, message: 'Participant updated successfully.', participant: updated });
   } catch (err) {
     console.error('Update Participant Error:', err);
     res.status(500).json({ success: false, message: 'Failed to update participant.', error: err.message });
@@ -265,10 +244,15 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
-    const pool = await getPool();
+    let filter = {};
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      filter._id = id;
+    } else {
+      filter.registration_id = id;
+    }
 
-    const [result] = await pool.query('DELETE FROM participants WHERE id = ? OR registration_id = ?', [id, id]);
-    if (result.affectedRows === 0) {
+    const deleted = await Participant.findOneAndDelete(filter);
+    if (!deleted) {
       return res.status(404).json({ success: false, message: 'Participant not found.' });
     }
 

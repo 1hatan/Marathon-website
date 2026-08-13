@@ -15,8 +15,9 @@ const settingsRoutes = require('./routes/settingsRoutes');
 
 const app = express();
 
-// Configured CORS setup for deployed frontend domains & localhost
+// Configured CORS setup for deployed Vercel domain & local development
 const allowedOrigins = [
+  'https://marathon-website-8fi8-f8vki5isc-1hatans-projects.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:5000',
@@ -38,7 +39,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// Serverless DB Auto-initialization Middleware
+// Serverless DB Auto-initialization Middleware for Vercel
 let dbInitialized = false;
 app.use(async (req, res, next) => {
   if (!dbInitialized) {

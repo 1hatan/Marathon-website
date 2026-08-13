@@ -1,10 +1,9 @@
-const { getPool } = require('../db');
+const { GalleryItem } = require('../db');
 
 exports.getAll = async (req, res) => {
   try {
-    const pool = await getPool();
-    const [rows] = await pool.query('SELECT * FROM gallery ORDER BY created_at DESC');
-    res.json({ success: true, gallery: rows || [] });
+    const items = await GalleryItem.find().sort({ created_at: -1 }).lean();
+    res.json({ success: true, gallery: items });
   } catch (err) {
     console.error('Get Gallery Error:', err);
     res.status(500).json({ success: false, message: 'Failed to retrieve gallery items.' });
@@ -13,16 +12,19 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { image_url, title, status } = req.body;
-    if (!image_url) {
-      return res.status(400).json({ success: false, message: 'Image URL is required.' });
+    const { title, image_url, category, is_featured } = req.body;
+    if (!title || !image_url) {
+      return res.status(400).json({ success: false, message: 'Title and image URL are required.' });
     }
-    const pool = await getPool();
-    const [result] = await pool.query(
-      'INSERT INTO gallery (image_url, title, status) VALUES (?, ?, ?)',
-      [image_url, title || '', status || 'active']
-    );
-    res.status(201).json({ success: true, message: 'Gallery item added.', id: result.insertId || result.lastID });
+
+    const newItem = await GalleryItem.create({
+      title,
+      image_url,
+      category: category || 'General',
+      is_featured: !!is_featured
+    });
+
+    res.status(201).json({ success: true, message: 'Gallery item added.', galleryItem: newItem });
   } catch (err) {
     console.error('Create Gallery Item Error:', err);
     res.status(500).json({ success: false, message: 'Failed to add gallery item.' });
@@ -32,13 +34,19 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { image_url, title, status } = req.body;
-    const pool = await getPool();
-    await pool.query(
-      'UPDATE gallery SET image_url=?, title=?, status=? WHERE id=?',
-      [image_url, title, status || 'active', id]
+    const { title, image_url, category, is_featured } = req.body;
+
+    const updated = await GalleryItem.findByIdAndUpdate(
+      id,
+      { title, image_url, category, is_featured },
+      { new: true }
     );
-    res.json({ success: true, message: 'Gallery item updated.' });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Gallery item not found.' });
+    }
+
+    res.json({ success: true, message: 'Gallery item updated.', galleryItem: updated });
   } catch (err) {
     console.error('Update Gallery Item Error:', err);
     res.status(500).json({ success: false, message: 'Failed to update gallery item.' });
@@ -48,8 +56,10 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
-    const pool = await getPool();
-    await pool.query('DELETE FROM gallery WHERE id=?', [id]);
+    const deleted = await GalleryItem.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Gallery item not found.' });
+    }
     res.json({ success: true, message: 'Gallery item deleted.' });
   } catch (err) {
     console.error('Delete Gallery Item Error:', err);
