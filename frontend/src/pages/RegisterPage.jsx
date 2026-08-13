@@ -99,11 +99,16 @@ export default function RegisterPage() {
 
     setSubmitting(true);
     try {
+      const ageNum = parseInt(formData.age) || 25;
+      const currentYear = new Date().getFullYear();
+      const calculatedDob = `${currentYear - ageNum}-01-01`;
+
       const payload = {
         full_name: formData.full_name.trim(),
         email: formData.email.trim() || `${formData.mobile}@infinityrun.org`,
         mobile: formData.mobile.trim(),
-        dob: formData.age ? `2000-01-01` : '1995-01-01',
+        age: ageNum,
+        dob: calculatedDob,
         gender: formData.gender || 'Not Specified',
         blood_group: formData.blood_group || 'O+',
         race_category_id: parseInt(formData.race_category_id || selectedRace.id),
@@ -111,7 +116,7 @@ export default function RegisterPage() {
         emergency_name: 'Emergency Contact',
         emergency_mobile: formData.emergency_mobile.trim() || formData.mobile.trim(),
         emergency_relation: 'Contact',
-        medical_info: `Age: ${formData.age || 'N/A'}`
+        medical_info: formData.medical_info ? formData.medical_info.trim() : null
       };
 
       const res = await submitRegistration(payload);

@@ -1,84 +1,144 @@
-const { Participant, RaceCategory, ContactMessage } = require('../db');
+const { getPool } = require('../db');
 
 exports.getStats = async (req, res) => {
   try {
+    const pool = await getPool();
+
     // 1. Core Summary Metrics
-    const total_registrations = await Participant.countDocuments();
+    const [regRows] = await pool.query('SELECT COUNT(*) as total_registrations FROM participants');
+    const total_registrations = regRows[0]?.total_registrations || 0;
 
-    const distinctEmails = await Participant.distinct('email');
-    const total_participants = distinctEmails.length || total_registrations;
+    const [partRows] = await pool.query('SELECT COUNT(DISTINCT email) as total_participants FROM participants');
+    const total_participants = partRows[0]?.total_participants || total_registrations;
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const today_registrations = await Participant.countDocuments({ created_at: { $gte: startOfToday } });
+    const [todayRows] = await pool.query('SELECT COUNT(*) as today_registrations FROM participants WHERE DATE(created_at) = CURDATE()');
+    const today_registrations = todayRows[0]?.today_registrations || 0;
 
-    const confirmed_registrations = await Participant.countDocuments({ registration_status: 'Confirmed' });
-    const pending_registrations = await Participant.countDocuments({ registration_status: 'Pending' });
-    const total_messages = await ContactMessage.countDocuments();
+    const [confRows] = await pool.query("SELECT COUNT(*) as confirmed_registrations FROM participants WHERE registration_status = 'Confirmed'");
+    const confirmed_registrations = confRows[0]?.confirmed_registrations || 0;
+
+    const [pendRows] = await pool.query("SELECT COUNT(*) as pending_registrations FROM participants WHERE registration_status = 'Pending'");
+    const pending_registrations = pendRows[0]?.pending_registrations || 0;
+
+    const [msgRows] = await pool.query('SELECT COUNT(*) as total_messages FROM contact_messages');
+    const total_messages = msgRows[0]?.total_messages || 0;
 
     // 2. Gender Breakdown
-    const male_participants = await Participant.countDocuments({ gender: /^male$/i });
-    const female_participants = await Participant.countDocuments({ gender: /^female$/i });
-    const other_participants = await Participant.countDocuments({
-      gender: { $not: /^male$|^female$/i }
-    });
+    const [maleRows] = await pool.query("SELECT COUNT(*) as count FROM participants WHERE LOWER(gender) = 'male'");
+    const male_participants = maleRows[0]?.count || 0;
 
-    // 3. Race Categories & Distance Breakdown
-    const races = await RaceCategory.find().lean();
-    const raceMap = new Map(races.map(r => [r.id, r]));
+    const [femaleRows] = await pool.query("SELECT COUNT(*) as count FROM participants WHERE LOWER(gender) = 'female'");
+    const female_participants = femaleRows[0]?.count || 0;
 
-    const reg_3k = await Participant.countDocuments({ race_category_id: 1 });
-    const reg_5k = await Participant.countDocuments({ race_category_id: 2 });
-    const reg_10k = await Participant.countDocuments({ race_category_id: 3 });
-    const reg_21k = await Participant.countDocuments({ race_category_id: 4 });
-    const reg_42k = await Participant.countDocuments({ race_category_id: 5 });
+    const [otherRows] = await pool.query("SELECT COUNT(*) as count FROM participants WHERE LOWER(gender) NOT IN ('male', 'female')");
+    const other_participants = otherRows[0]?.count || 0;
+
+    // 3. Race Distance Breakdown
+    const [r3k] = await pool.query(`
+      SELECT COUNT(p.id) as count 
+      FROM participants p 
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '3K' OR r.name LIKE '%3K%' OR p.race_category_id = 1
+    `);
+    const reg_3k = r3k[0]?.count || 0;
+
+    const [r5k] = await pool.query(`
+      SELECT COUNT(p.id) as count 
+      FROM participants p 
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '5K' OR r.name LIKE '%5K%' OR p.race_category_id = 2
+    `);
+    const reg_5k = r5k[0]?.count || 0;
+
+    const [r10k] = await pool.query(`
+      SELECT COUNT(p.id) as count 
+      FROM participants p 
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '10K' OR r.name LIKE '%10K%' OR p.race_category_id = 3
+    `);
+    const reg_10k = r10k[0]?.count || 0;
+
+    const [r21k] = await pool.query(`
+      SELECT COUNT(p.id) as count 
+      FROM participants p 
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '21K' OR r.name LIKE '%21K%' OR r.name LIKE '%Half Marathon%' OR p.race_category_id = 4
+    `);
+    const reg_21k = r21k[0]?.count || 0;
+
+    const [r42k] = await pool.query(`
+      SELECT COUNT(p.id) as count 
+      FROM participants p 
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE r.distance = '42K' OR r.name LIKE '%42K%' OR r.name LIKE '%Full Marathon%'
+    `);
+    const reg_42k = r42k[0]?.count || 0;
 
     // 4. Total Revenue Calculation
-    const paidParticipants = await Participant.find({ payment_status: 'Paid' }, 'race_category_id').lean();
-    let total_revenue = 0;
-    paidParticipants.forEach(p => {
-      const race = raceMap.get(p.race_category_id);
-      total_revenue += race ? race.fee : 499;
-    });
+    const [revenueRows] = await pool.query(`
+      SELECT SUM(COALESCE(r.fee, 499)) as total_revenue 
+      FROM participants p 
+      LEFT JOIN race_categories r ON p.race_category_id = r.id 
+      WHERE p.payment_status = 'Paid'
+    `);
+    const total_revenue = parseFloat(revenueRows[0]?.total_revenue || 0);
 
-    // 5. Category-wise Registrations Aggregation
-    const categoryStats = races.map(r => {
-      const count = paidParticipants.filter(p => p.race_category_id === r.id).length;
-      return {
-        category: r.name,
-        distance: r.distance,
-        count: count,
-        revenue: count * r.fee
-      };
-    });
+    // 5. Category-wise Stats
+    const [categoryStats] = await pool.query(`
+      SELECT r.name as category, r.distance, COUNT(p.id) as count, COALESCE(SUM(r.fee), 0) as revenue
+      FROM race_categories r
+      LEFT JOIN participants p ON r.id = p.race_category_id
+      GROUP BY r.id, r.name, r.distance
+    `);
 
     // 6. Gender Stats Array
-    const genderAgg = await Participant.aggregate([
-      { $group: { _id: '$gender', count: { $sum: 1 } } }
-    ]);
-    const genderStats = genderAgg.map(g => ({
-      gender: g._id || 'Not Specified',
-      count: g.count
-    }));
+    const [genderStats] = await pool.query(`
+      SELECT gender, COUNT(*) as count
+      FROM participants
+      GROUP BY gender
+    `);
 
     // 7. T-Shirt Size Distribution Array
-    const tshirtAgg = await Participant.aggregate([
-      { $group: { _id: '$t_shirt_size', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]);
-    const tshirtStats = tshirtAgg.map(t => ({
-      size: t._id || 'M',
-      count: t.count
-    }));
+    const [tshirtStats] = await pool.query(`
+      SELECT t_shirt_size as size, COUNT(*) as count
+      FROM participants
+      GROUP BY t_shirt_size
+      ORDER BY count DESC
+    `);
 
-    // 8. Recent Registrations
-    const recentRaw = await Participant.find()
-      .sort({ created_at: -1 })
-      .limit(10)
-      .lean();
+    // 8. T-Shirt Category Matrix (Fix B3)
+    const [tshirtMatrix] = await pool.query(`
+      SELECT 
+        COALESCE(r.name, '3K Fun Run') as race_name,
+        p.t_shirt_size as size,
+        COUNT(p.id) as count
+      FROM race_categories r
+      LEFT JOIN participants p ON r.id = p.race_category_id
+      GROUP BY r.name, p.t_shirt_size
+    `);
 
-    const recentRegistrations = recentRaw.map(p => {
-      const race = raceMap.get(p.race_category_id);
+    // 9. Recent Registrations
+    const [recentRegistrationsRaw] = await pool.query(`
+      SELECT 
+        p.id,
+        p.registration_id,
+        p.full_name,
+        p.email,
+        p.mobile,
+        p.gender,
+        p.dob,
+        p.t_shirt_size,
+        p.registration_status,
+        p.created_at,
+        COALESCE(r.name, '3K Fun Run') as race_name,
+        COALESCE(r.distance, '3K') as race_distance
+      FROM participants p
+      LEFT JOIN race_categories r ON p.race_category_id = r.id
+      ORDER BY p.created_at DESC
+      LIMIT 10
+    `);
+
+    const recentRegistrations = (recentRegistrationsRaw || []).map(p => {
       let age = null;
       if (p.dob) {
         const birth = new Date(p.dob);
@@ -91,25 +151,16 @@ exports.getStats = async (req, res) => {
           }
         }
       }
-      return {
-        ...p,
-        id: p._id.toString(),
-        race_name: race ? race.name : '3K Fun Run',
-        race_distance: race ? race.distance : '3K',
-        age
-      };
+      return { ...p, age };
     });
 
-    // 9. Recent Contact Messages
-    const recentMessagesRaw = await ContactMessage.find()
-      .sort({ created_at: -1 })
-      .limit(10)
-      .lean();
-
-    const recentMessages = recentMessagesRaw.map(m => ({
-      ...m,
-      id: m._id.toString()
-    }));
+    // 10. Recent Messages
+    const [recentMessages] = await pool.query(`
+      SELECT id, name, email, phone, subject, message, status, created_at
+      FROM contact_messages
+      ORDER BY created_at DESC
+      LIMIT 10
+    `);
 
     res.json({
       success: true,
@@ -133,6 +184,7 @@ exports.getStats = async (req, res) => {
       categoryStats: categoryStats || [],
       genderStats: genderStats || [],
       tshirtStats: tshirtStats || [],
+      tshirtMatrix: tshirtMatrix || [],
       recentRegistrations: recentRegistrations || [],
       recentMessages: recentMessages || []
     });

@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 require('dotenv').config();
+
 const { initializeDatabase } = require('./db');
 
 const authRoutes = require('./routes/authRoutes');
@@ -30,7 +33,7 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app') || process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

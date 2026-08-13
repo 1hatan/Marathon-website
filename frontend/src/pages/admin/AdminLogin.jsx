@@ -4,8 +4,8 @@ import { adminLogin } from '../../services/api';
 import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('admin@infinityrun.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
@@ -39,15 +39,6 @@ export default function AdminLogin() {
         <div className="text-center space-y-1">
           <h1 className="text-3xl font-black text-black tracking-tight font-outfit uppercase">INFINITY<span className="text-rock-yellow">RUN</span></h1>
           <p className="text-xs font-black text-rock-cyan uppercase tracking-widest font-outfit">Admin Control Portal</p>
-        </div>
-
-        {/* Demo Credentials Notice */}
-        <div className="p-4 rounded-2xl bg-rock-yellow/10 border border-rock-yellow/40 text-xs text-black space-y-1">
-          <div className="font-extrabold font-outfit uppercase flex items-center gap-1.5 text-black">
-            <ShieldCheck className="w-4 h-4 text-rock-cyan" /> Default Admin Credentials:
-          </div>
-          <p><strong className="text-black font-extrabold">Email:</strong> admin@infinityrun.com</p>
-          <p><strong className="text-black font-extrabold">Password:</strong> admin123</p>
         </div>
 
         {errorMsg && (
