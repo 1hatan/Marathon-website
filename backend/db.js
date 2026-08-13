@@ -11,14 +11,8 @@ const connectDB = async () => {
     return;
   }
 
-  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
-  if (!mongoUri) {
-    console.error('[MongoDB Atlas Error] MONGODB_URI environment variable is missing.');
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1);
-    }
-    return;
-  }
+  const defaultMongoUri = 'mongodb+srv://Admin:Admin_123@cluster0.gutqbpe.mongodb.net/infinity_run?retryWrites=true&w=majority';
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || defaultMongoUri;
 
   try {
     const conn = await mongoose.connect(mongoUri, {
