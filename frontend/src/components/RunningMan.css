@@ -1,225 +1,79 @@
-.runner-wrapper {
+/* Running Man GIF Container */
+.runner-gif-container {
   position: relative;
-  width: 420px;
-  height: 520px;
+  width: 480px;
+  height: 480px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  animation:
-    runnerBounce 0.55s ease-in-out infinite alternate,
-    runnerMove 2.8s ease-in-out infinite;
+  margin: 0 auto;
 }
 
-.running-man {
-  width: 400px;
-  height: 500px;
+/* Cropping & Centering Wrapper for Clean Character Display */
+.runner-gif-crop {
+  position: relative;
+  width: 100%;
+  height: 100%;
 
-  overflow: visible;
+  border-radius: 28px;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* Hair movement */
-.hair {
-  transform-origin: 145px 70px;
-  animation:
-    hairMove 0.28s ease-in-out infinite alternate;
+/* Animated GIF Image Styling */
+.runner-gif-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
 }
 
-/* Arms */
-.arm-left {
-  transform-origin: 105px 140px;
-  animation:
-    armLeft 0.45s ease-in-out infinite alternate;
-}
-
-.arm-right {
-  transform-origin: 165px 140px;
-  animation:
-    armRight 0.45s ease-in-out infinite alternate;
-}
-
-/* Legs */
-.leg-left {
-  transform-origin: 120px 225px;
-  animation:
-    legLeft 0.45s ease-in-out infinite alternate;
-}
-
-.leg-right {
-  transform-origin: 150px 225px;
-  animation:
-    legRight 0.45s ease-in-out infinite alternate;
-}
-
-/* Ground shadow */
-.runner-shadow {
+/* Ground Radial Shadow Glow Accent */
+.runner-gif-shadow {
   position: absolute;
-
-  bottom: 10px;
+  bottom: -10px;
   left: 50%;
 
-  width: 180px;
-  height: 28px;
+  width: 260px;
+  height: 24px;
 
-  background: rgba(0, 0, 0, 0.18);
+  background: radial-gradient(ellipse at center, rgba(245, 205, 25, 0.4) 0%, rgba(0, 163, 255, 0.2) 50%, transparent 80%);
 
   border-radius: 50%;
-
   transform: translateX(-50%);
-
-  filter: blur(6px);
-
-  animation:
-    shadowMove 0.55s ease-in-out infinite alternate;
+  filter: blur(10px);
+  pointer-events: none;
 }
 
-/* Whole body bounce */
-@keyframes runnerBounce {
-
-  from {
-    transform:
-      translateY(0)
-      rotate(-1deg);
-  }
-
-  to {
-    transform:
-      translateY(-14px)
-      rotate(1deg);
-  }
-}
-
-/* Small horizontal movement */
-@keyframes runnerMove {
-
-  0% {
-    margin-left: -12px;
-  }
-
-  50% {
-    margin-left: 12px;
-  }
-
-  100% {
-    margin-left: -12px;
-  }
-}
-
-/* Hair */
-@keyframes hairMove {
-
-  from {
-    transform: rotate(-3deg);
-  }
-
-  to {
-    transform:
-      rotate(5deg)
-      translateX(3px);
-  }
-}
-
-/* Left arm */
-@keyframes armLeft {
-
-  from {
-    transform: rotate(22deg);
-  }
-
-  to {
-    transform: rotate(-24deg);
-  }
-}
-
-/* Right arm */
-@keyframes armRight {
-
-  from {
-    transform: rotate(-22deg);
-  }
-
-  to {
-    transform: rotate(24deg);
-  }
-}
-
-/* Left leg */
-@keyframes legLeft {
-
-  from {
-    transform: rotate(18deg);
-  }
-
-  to {
-    transform: rotate(-22deg);
-  }
-}
-
-/* Right leg */
-@keyframes legRight {
-
-  from {
-    transform: rotate(-22deg);
-  }
-
-  to {
-    transform: rotate(18deg);
-  }
-}
-
-/* Shadow */
-@keyframes shadowMove {
-
-  from {
-    transform:
-      translateX(-50%)
-      scaleX(0.85);
-
-    opacity: 0.12;
-  }
-
-  to {
-    transform:
-      translateX(-50%)
-      scaleX(1.1);
-
-    opacity: 0.22;
-  }
-}
-
-/* Tablet */
+/* Responsive Sizing: Tablet */
 @media (max-width: 1024px) {
-
-  .runner-wrapper {
-    width: 360px;
-    height: 460px;
-  }
-
-  .running-man {
-    width: 350px;
-    height: 440px;
-  }
-
-  .runner-shadow {
-    width: 150px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-
-  .runner-wrapper {
-    width: 280px;
+  .runner-gif-container {
+    width: 380px;
     height: 380px;
   }
-
-  .running-man {
-    width: 270px;
-    height: 360px;
+  .runner-gif-shadow {
+    width: 200px;
   }
+}
 
-  .runner-shadow {
-    width: 120px;
+/* Responsive Sizing: Mobile */
+@media (max-width: 640px) {
+  .runner-gif-container {
+    width: 300px;
+    height: 300px;
+  }
+  .runner-gif-shadow {
+    width: 160px;
   }
 }
