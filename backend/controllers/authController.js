@@ -1,4 +1,4 @@
-const { getPool } = require('../db');
+const { Admin } = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -26,16 +26,13 @@ exports.login = async (req, res) => {
     const defaultEmail = (process.env.ADMIN_DEFAULT_EMAIL || 'admin@infinityrun.com').trim().toLowerCase();
     const defaultPass = process.env.ADMIN_DEFAULT_PASS || 'admin123';
 
-    const pool = await getPool();
-    let [rows] = await pool.query('SELECT * FROM admins WHERE LOWER(email) = ?', [cleanEmail]);
+    let admin = await Admin.findOne({ email: cleanEmail });
 
-    if (!rows || rows.length === 0) {
-      [rows] = await pool.query('SELECT * FROM admins WHERE LOWER(email) = ? LIMIT 1', [defaultEmail]);
+    if (!admin) {
+      admin = await Admin.findOne({ email: defaultEmail });
     }
 
-    let admin = (rows && rows.length > 0) ? rows[0] : null;
     let isMatch = false;
-
     if (admin) {
       isMatch = await bcrypt.compare(cleanPassword, admin.password_hash);
     }
@@ -46,10 +43,15 @@ exports.login = async (req, res) => {
       const newHash = await bcrypt.hash(defaultPass, salt);
 
       if (admin) {
-        await pool.query('UPDATE admins SET password_hash = ? WHERE id = ?', [newHash, admin.id]);
+        admin.password_hash = newHash;
+        await admin.save();
       } else {
-        const [result] = await pool.query('INSERT INTO admins (name, email, password_hash) VALUES (?, ?, ?)', ['Infinity Admin', defaultEmail, newHash]);
-        admin = { id: result.insertId || 1, name: 'Infinity Admin', email: defaultEmail };
+        admin = await Admin.create({
+          id: 1,
+          name: 'Infinity Admin',
+          email: defaultEmail,
+          password_hash: newHash
+        });
       }
       isMatch = true;
     }
@@ -60,7 +62,7 @@ exports.login = async (req, res) => {
 
     const jwtSecret = getJwtSecret();
     const token = jwt.sign(
-      { id: admin.id, name: admin.name, email: admin.email },
+      { id: admin._id.toString(), name: admin.name, email: admin.email },
       jwtSecret,
       { expiresIn: '24h' }
     );
@@ -69,7 +71,7 @@ exports.login = async (req, res) => {
       success: true,
       token,
       admin: {
-        id: admin.id,
+        id: admin._id.toString(),
         name: admin.name,
         email: admin.email
       }
@@ -82,12 +84,11 @@ exports.login = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   try {
-    const pool = await getPool();
-    const [rows] = await pool.query('SELECT id, name, email, created_at FROM admins WHERE id = ?', [req.user.id]);
-    if (!rows || rows.length === 0) {
+    const admin = await Admin.findById(req.user.id).select('-password_hash').lean();
+    if (!admin) {
       return res.status(404).json({ success: false, message: 'Admin user not found.' });
     }
-    res.json({ success: true, admin: rows[0] });
+    res.json({ success: true, admin: { ...admin, id: admin._id.toString() } });
   } catch (err) {
     console.error('GetMe Error:', err);
     res.status(500).json({ success: false, message: 'Internal server error.' });

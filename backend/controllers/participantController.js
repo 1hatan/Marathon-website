@@ -1,4 +1,4 @@
-const { getPool } = require('../db');
+const { Participant, RaceCategory } = require('../db');
 const jwt = require('jsonwebtoken');
 
 // Helper to generate registration ID
@@ -9,46 +9,47 @@ function generateRegistrationId() {
 
 exports.getAll = async (req, res) => {
   try {
-    const pool = await getPool();
     const { search, category_id, status, t_shirt_size } = req.query;
-
-    let sql = `
-      SELECT 
-        p.*,
-        r.name as race_name,
-        r.distance as race_distance,
-        r.fee as race_fee
-      FROM participants p
-      LEFT JOIN race_categories r ON p.race_category_id = r.id
-      WHERE 1=1
-    `;
-    const params = [];
+    const filter = {};
 
     if (search) {
-      const term = `%${search.trim()}%`;
-      sql += ` AND (p.full_name LIKE ? OR p.email LIKE ? OR p.mobile LIKE ? OR p.registration_id LIKE ?)`;
-      params.push(term, term, term, term);
+      const regex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { full_name: regex },
+        { email: regex },
+        { mobile: regex },
+        { registration_id: regex }
+      ];
     }
 
     if (category_id) {
-      sql += ` AND p.race_category_id = ?`;
-      params.push(parseInt(category_id));
+      filter.race_category_id = parseInt(category_id);
     }
 
     if (status) {
-      sql += ` AND p.registration_status = ?`;
-      params.push(status);
+      filter.registration_status = status;
     }
 
     if (t_shirt_size) {
-      sql += ` AND p.t_shirt_size = ?`;
-      params.push(t_shirt_size);
+      filter.t_shirt_size = t_shirt_size;
     }
 
-    sql += ` ORDER BY p.created_at DESC`;
+    const participants = await Participant.find(filter).sort({ created_at: -1 }).lean();
+    const races = await RaceCategory.find().lean();
+    const raceMap = new Map(races.map(r => [r.id, r]));
 
-    const [rows] = await pool.query(sql, params);
-    res.json({ success: true, count: rows ? rows.length : 0, participants: rows || [] });
+    const enriched = participants.map(p => {
+      const race = raceMap.get(p.race_category_id) || {};
+      return {
+        ...p,
+        id: p._id.toString(),
+        race_name: race.name || '3K Fun Run',
+        race_distance: race.distance || '3K',
+        race_fee: race.fee || 499
+      };
+    });
+
+    res.json({ success: true, count: enriched.length, participants: enriched });
   } catch (err) {
     console.error('Get Participants Error:', err);
     res.status(500).json({ success: false, message: 'Failed to retrieve participants.', error: err.message });
@@ -58,25 +59,26 @@ exports.getAll = async (req, res) => {
 exports.getById = async (req, res) => {
   try {
     const { id } = req.params;
-    const pool = await getPool();
+    let participant = null;
 
-    const [rows] = await pool.query(`
-      SELECT 
-        p.*,
-        r.name as race_name,
-        r.distance as race_distance,
-        r.fee as race_fee
-      FROM participants p
-      LEFT JOIN race_categories r ON p.race_category_id = r.id
-      WHERE p.registration_id = ? OR p.id = ?
-      LIMIT 1
-    `, [id, id]);
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      participant = await Participant.findById(id).lean();
+    }
+    if (!participant) {
+      participant = await Participant.findOne({ registration_id: id }).lean();
+    }
+    if (!participant && !isNaN(parseInt(id))) {
+      participant = await Participant.findOne({ id: parseInt(id) }).lean();
+    }
 
-    if (!rows || rows.length === 0) {
+    if (!participant) {
       return res.status(404).json({ success: false, message: 'Participant registration not found.' });
     }
 
-    const participant = rows[0];
+    const race = await RaceCategory.findOne({ id: participant.race_category_id }).lean();
+    const raceName = race?.name || '3K Fun Run';
+    const raceDistance = race?.distance || '3K';
+    const raceFee = race?.fee || 499;
 
     // Check if caller is authenticated admin
     let isAdmin = false;
@@ -92,7 +94,16 @@ exports.getById = async (req, res) => {
     }
 
     if (isAdmin) {
-      return res.json({ success: true, participant });
+      return res.json({
+        success: true,
+        participant: {
+          ...participant,
+          id: participant._id.toString(),
+          race_name: raceName,
+          race_distance: raceDistance,
+          race_fee: raceFee
+        }
+      });
     }
 
     // Public lookup: project ONLY safe ticket pass fields (no medical or emergency details)
@@ -101,8 +112,8 @@ exports.getById = async (req, res) => {
       participant: {
         registration_id: participant.registration_id,
         full_name: participant.full_name,
-        race_name: participant.race_name || '3K Fun Run',
-        race_distance: participant.race_distance || '3K',
+        race_name: raceName,
+        race_distance: raceDistance,
         t_shirt_size: participant.t_shirt_size,
         blood_group: participant.blood_group,
         registration_status: participant.registration_status,
@@ -137,20 +148,20 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter Full Name, Email, and Phone Number.' });
     }
 
-    const pool = await getPool();
-
-    // 1. Resolve race category
     let finalCatId = parseInt(race_category_id);
-    let [races] = await pool.query('SELECT * FROM race_categories WHERE id = ? LIMIT 1', [finalCatId]);
+    let selectedRace = null;
 
-    if (!races || races.length === 0) {
-      [races] = await pool.query('SELECT * FROM race_categories LIMIT 1');
+    if (!isNaN(finalCatId)) {
+      selectedRace = await RaceCategory.findOne({ id: finalCatId }).lean();
     }
-
-    const selectedRace = (races && races.length > 0) ? races[0] : { id: 1, name: '3K Fun Run', distance: '3K', fee: 499 };
+    if (!selectedRace) {
+      selectedRace = await RaceCategory.findOne().lean();
+    }
+    if (!selectedRace) {
+      selectedRace = { id: 1, name: '3K Fun Run', distance: '3K', fee: 499 };
+    }
     finalCatId = selectedRace.id;
 
-    // 2. Derive DOB properly from age or date input
     let validDob = dob;
     const ageVal = parseInt(age);
     if (!isNaN(ageVal) && ageVal > 0) {
@@ -164,63 +175,40 @@ exports.create = async (req, res) => {
     const eMobile = emergency_mobile || mobile;
     const eRelation = emergency_relation || 'Contact';
 
-    // 3. Unique Registration ID loop (with query error propagation)
     let registration_id = generateRegistrationId();
-    let isUnique = false;
-    let attempts = 0;
-
-    while (!isUnique && attempts < 10) {
-      attempts++;
-      const [existing] = await pool.query('SELECT id FROM participants WHERE registration_id = ? LIMIT 1', [registration_id]);
-      if (!existing || existing.length === 0) {
-        isUnique = true;
-      } else {
-        registration_id = generateRegistrationId();
-      }
+    let existing = await Participant.findOne({ registration_id });
+    while (existing) {
+      registration_id = generateRegistrationId();
+      existing = await Participant.findOne({ registration_id });
     }
 
-    // 4. Insert Participant into MySQL
-    const [result] = await pool.query(`
-      INSERT INTO participants (
-        registration_id, full_name, email, mobile, dob, gender, blood_group,
-        race_category_id, t_shirt_size, emergency_name, emergency_mobile,
-        emergency_relation, medical_info, registration_status, payment_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
+    const newParticipant = await Participant.create({
       registration_id,
-      full_name.trim(),
-      email.trim().toLowerCase(),
-      mobile.trim(),
-      validDob,
-      gender || 'Male',
-      blood_group || 'O+',
-      finalCatId,
-      t_shirt_size || 'M',
-      eName,
-      eMobile,
-      eRelation,
-      medical_info || null,
-      'Confirmed',
-      'Paid'
-    ]);
+      full_name: full_name.trim(),
+      email: email.trim().toLowerCase(),
+      mobile: mobile.trim(),
+      dob: validDob,
+      gender: gender || 'Male',
+      blood_group: blood_group || 'O+',
+      race_category_id: finalCatId,
+      t_shirt_size: t_shirt_size || 'M',
+      emergency_name: eName,
+      emergency_mobile: eMobile,
+      emergency_relation: eRelation,
+      medical_info: medical_info || null,
+      registration_status: 'Confirmed',
+      payment_status: 'Paid'
+    });
 
     const participantObj = {
-      id: result.insertId || result.lastID,
-      registration_id,
-      full_name,
-      email,
-      mobile,
-      dob: validDob,
-      gender,
-      blood_group,
-      race_category_id: finalCatId,
+      ...newParticipant.toObject(),
+      id: newParticipant._id.toString(),
       race_name: selectedRace.name,
       race_distance: selectedRace.distance,
-      t_shirt_size,
-      registration_status: 'Confirmed'
+      race_fee: selectedRace.fee
     };
 
-    console.log(`[MySQL] New participant registered: ${registration_id} - ${full_name}`);
+    console.log(`[MongoDB Atlas] New participant registered: ${registration_id} - ${full_name}`);
 
     return res.status(201).json({
       success: true,
@@ -241,25 +229,28 @@ exports.update = async (req, res) => {
   try {
     const { id } = req.params;
     const { registration_status, payment_status, full_name, email, mobile, t_shirt_size } = req.body;
-    const pool = await getPool();
 
-    const [result] = await pool.query(`
-      UPDATE participants 
-      SET registration_status = COALESCE(?, registration_status),
-          payment_status = COALESCE(?, payment_status),
-          full_name = COALESCE(?, full_name),
-          email = COALESCE(?, email),
-          mobile = COALESCE(?, mobile),
-          t_shirt_size = COALESCE(?, t_shirt_size),
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? OR registration_id = ?
-    `, [registration_status, payment_status, full_name, email, mobile, t_shirt_size, id, id]);
+    let filter = {};
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      filter._id = id;
+    } else {
+      filter.registration_id = id;
+    }
 
-    if (result.affectedRows === 0) {
+    const updateFields = { updated_at: Date.now() };
+    if (registration_status) updateFields.registration_status = registration_status;
+    if (payment_status) updateFields.payment_status = payment_status;
+    if (full_name) updateFields.full_name = full_name;
+    if (email) updateFields.email = email;
+    if (mobile) updateFields.mobile = mobile;
+    if (t_shirt_size) updateFields.t_shirt_size = t_shirt_size;
+
+    const updated = await Participant.findOneAndUpdate(filter, updateFields, { new: true });
+    if (!updated) {
       return res.status(404).json({ success: false, message: 'Participant not found.' });
     }
 
-    res.json({ success: true, message: 'Participant updated successfully.' });
+    res.json({ success: true, message: 'Participant updated successfully.', participant: updated });
   } catch (err) {
     console.error('Update Participant Error:', err);
     res.status(500).json({ success: false, message: 'Failed to update participant.', error: err.message });
@@ -269,10 +260,15 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
-    const pool = await getPool();
+    let filter = {};
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      filter._id = id;
+    } else {
+      filter.registration_id = id;
+    }
 
-    const [result] = await pool.query('DELETE FROM participants WHERE id = ? OR registration_id = ?', [id, id]);
-    if (result.affectedRows === 0) {
+    const deleted = await Participant.findOneAndDelete(filter);
+    if (!deleted) {
       return res.status(404).json({ success: false, message: 'Participant not found.' });
     }
 

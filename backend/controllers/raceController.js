@@ -1,18 +1,12 @@
-const { getPool } = require('../db');
+const { RaceCategory } = require('../db');
 
 exports.getAll = async (req, res) => {
   try {
-    const pool = await getPool();
     const isAdmin = req.query.admin === 'true' || req.query.admin === '1';
+    const filter = isAdmin ? {} : { status: 'active' };
 
-    let sql = 'SELECT * FROM race_categories';
-    if (!isAdmin) {
-      sql += " WHERE status = 'active'";
-    }
-    sql += ' ORDER BY fee ASC';
-
-    const [rows] = await pool.query(sql);
-    res.json({ success: true, races: rows || [] });
+    const races = await RaceCategory.find(filter).sort({ fee: 1 }).lean();
+    res.json({ success: true, races });
   } catch (err) {
     console.error('Get Races Error:', err);
     res.status(500).json({ success: false, message: 'Failed to retrieve race categories.' });
@@ -25,12 +19,21 @@ exports.create = async (req, res) => {
     if (!name || !distance || fee === undefined) {
       return res.status(400).json({ success: false, message: 'Name, distance, and fee are required.' });
     }
-    const pool = await getPool();
-    const [result] = await pool.query(
-      'INSERT INTO race_categories (name, distance, description, age_limit, fee, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, distance, description || '', age_limit || 'Open to all ages', fee, status || 'active']
-    );
-    res.status(201).json({ success: true, message: 'Race category created.', id: result.insertId || result.lastID });
+
+    const highest = await RaceCategory.findOne().sort({ id: -1 }).lean();
+    const nextId = highest ? (highest.id + 1) : 1;
+
+    const newRace = await RaceCategory.create({
+      id: nextId,
+      name,
+      distance,
+      fee: Number(fee),
+      description: description || '',
+      age_limit: age_limit || 'Open to all ages',
+      status: status || 'active'
+    });
+
+    res.status(201).json({ success: true, message: 'Race category created.', race: newRace, id: newRace.id });
   } catch (err) {
     console.error('Create Race Error:', err);
     res.status(500).json({ success: false, message: 'Failed to create race category.' });
@@ -41,17 +44,21 @@ exports.update = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, distance, description, age_limit, fee, status } = req.body;
-    const pool = await getPool();
-    const [result] = await pool.query(
-      'UPDATE race_categories SET name=?, distance=?, description=?, age_limit=?, fee=?, status=? WHERE id=?',
-      [name, distance, description, age_limit, fee, status || 'active', id]
+
+    const numId = parseInt(id);
+    let filter = isNaN(numId) ? { _id: id } : { id: numId };
+
+    const updated = await RaceCategory.findOneAndUpdate(
+      filter,
+      { name, distance, description, age_limit, fee: Number(fee), status: status || 'active', updated_at: Date.now() },
+      { new: true }
     );
 
-    if (result.affectedRows === 0) {
+    if (!updated) {
       return res.status(404).json({ success: false, message: 'Race category not found.' });
     }
 
-    res.json({ success: true, message: 'Race category updated.' });
+    res.json({ success: true, message: 'Race category updated.', race: updated });
   } catch (err) {
     console.error('Update Race Error:', err);
     res.status(500).json({ success: false, message: 'Failed to update race category.' });
@@ -61,10 +68,11 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
-    const pool = await getPool();
-    const [result] = await pool.query('DELETE FROM race_categories WHERE id=?', [id]);
+    const numId = parseInt(id);
+    let filter = isNaN(numId) ? { _id: id } : { id: numId };
 
-    if (result.affectedRows === 0) {
+    const deleted = await RaceCategory.findOneAndDelete(filter);
+    if (!deleted) {
       return res.status(404).json({ success: false, message: 'Race category not found.' });
     }
 

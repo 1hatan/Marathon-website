@@ -1,318 +1,205 @@
-const mysql = require('mysql2/promise');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 require('dotenv').config();
 
-let sqlite3 = null;
-try {
-  sqlite3 = require('sqlite3').verbose();
-} catch (e) {
-  // Optional sqlite3 fallback for local dev
-}
+let isConnected = false;
 
-// Support DATABASE_URL or individual DB_* env variables for MySQL
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'infinity_run',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  multipleStatements: true
-};
+const connectDB = async () => {
+  if (isConnected && mongoose.connection.readyState === 1) {
+    return;
+  }
 
-if (process.env.DATABASE_URL) {
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  if (!mongoUri) {
+    console.error('[MongoDB Atlas Error] MONGODB_URI environment variable is missing.');
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+    return;
+  }
+
   try {
-    const url = new URL(process.env.DATABASE_URL);
-    dbConfig.host = url.hostname;
-    dbConfig.port = parseInt(url.port || '3306');
-    dbConfig.user = url.username;
-    dbConfig.password = url.password;
-    dbConfig.database = url.pathname.replace(/^\//, '') || 'infinity_run';
-  } catch (e) {
-    console.warn('[DB] Could not parse DATABASE_URL, using individual DB_* variables.');
-  }
-}
+    const conn = await mongoose.connect(mongoUri, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 10000
+    });
+    isConnected = true;
+    console.log(`[MongoDB Atlas] Connected successfully to database: ${conn.connection.name}`);
 
-let activeDriver = 'mysql'; // 'mysql' or 'sqlite'
-let mysqlPool = null;
-let sqliteDb = null;
-
-// Helper to run SQLite async query matching mysql2 interface [rows, fields]
-function querySqlite(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    if (!sqliteDb) {
-      return reject(new Error('SQLite database not initialized.'));
-    }
-    const trimmed = sql.trim();
-    const isSelect = /^SELECT/i.test(trimmed);
-
-    let modifiedSql = sql
-      .replace(/CURDATE\(\)/gi, "date('now')")
-      .replace(/AUTO_INCREMENT/gi, "AUTOINCREMENT")
-      .replace(/ON DUPLICATE KEY UPDATE[\s\S]*/gi, "");
-
-    if (isSelect) {
-      sqliteDb.all(modifiedSql, params, (err, rows) => {
-        if (err) return reject(err);
-        resolve([rows || [], null]);
-      });
-    } else {
-      sqliteDb.run(modifiedSql, params, function (err) {
-        if (err) return reject(err);
-        const result = {
-          insertId: this.lastID,
-          affectedRows: this.changes
-        };
-        resolve([result, null]);
-      });
-    }
-  });
-}
-
-const poolWrapper = {
-  async query(sql, params = []) {
-    if (activeDriver === 'mysql' && mysqlPool) {
-      return await mysqlPool.query(sql, params);
-    } else if (sqliteDb) {
-      return await querySqlite(sql, params);
-    } else {
-      throw new Error('No active MySQL database connection available.');
+    await initializeDatabase();
+  } catch (error) {
+    console.error('[MongoDB Atlas] Connection failed:', error.message);
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
     }
   }
 };
 
-async function getPool() {
-  return poolWrapper;
-}
+// Mongoose Schemas & Models
+const participantSchema = new mongoose.Schema({
+  registration_id: { type: String, required: true, unique: true },
+  full_name: { type: String, required: true },
+  email: { type: String, required: true },
+  mobile: { type: String, required: true },
+  dob: { type: String, default: '2000-01-01' },
+  gender: { type: String, default: 'Male' },
+  blood_group: { type: String, default: 'O+' },
+  race_category_id: { type: Number, required: true },
+  t_shirt_size: { type: String, default: 'M' },
+  emergency_name: { type: String },
+  emergency_mobile: { type: String },
+  emergency_relation: { type: String },
+  medical_info: { type: String },
+  registration_status: { type: String, default: 'Confirmed' },
+  payment_status: { type: String, default: 'Paid' },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+const raceCategorySchema = new mongoose.Schema({
+  id: { type: Number, required: true, unique: true },
+  name: { type: String, required: true },
+  distance: { type: String, required: true },
+  fee: { type: Number, required: true },
+  description: { type: String },
+  age_limit: { type: String, default: 'Open to all ages' },
+  status: { type: String, default: 'active' },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
+});
+
+const sponsorSchema = new mongoose.Schema({
+  id: { type: Number },
+  name: { type: String, required: true },
+  tier: { type: String, default: 'Silver' },
+  logo: { type: String },
+  website: { type: String },
+  status: { type: String, default: 'active' },
+  created_at: { type: Date, default: Date.now }
+});
+
+const gallerySchema = new mongoose.Schema({
+  id: { type: Number },
+  title: { type: String, required: true },
+  image_url: { type: String, required: true },
+  category: { type: String, default: 'General' },
+  status: { type: String, default: 'active' },
+  created_at: { type: Date, default: Date.now }
+});
+
+const faqSchema = new mongoose.Schema({
+  id: { type: Number },
+  question: { type: String, required: true },
+  answer: { type: String, required: true },
+  category: { type: String, default: 'General' },
+  status: { type: String, default: 'active' },
+  sort_order: { type: Number, default: 0 },
+  created_at: { type: Date, default: Date.now }
+});
+
+const contactMessageSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: { type: String },
+  subject: { type: String },
+  message: { type: String, required: true },
+  status: { type: String, default: 'Unread' },
+  created_at: { type: Date, default: Date.now }
+});
+
+const eventSettingSchema = new mongoose.Schema({
+  id: { type: Number, default: 1 },
+  event_name: { type: String, default: 'Infinity Run' },
+  event_date: { type: String, default: 'Sunday, November 15, 2026' },
+  venue: { type: String, default: 'Salem Sports Complex & Mahatma Gandhi Stadium' },
+  location: { type: String, default: 'Salem, Tamil Nadu' },
+  reporting_time: { type: String, default: '05:00 AM' },
+  flagoff_time: { type: String, default: '05:30 AM (21K) | 06:00 AM (10K) | 06:30 AM (5K/3K)' },
+  registration_deadline: { type: String, default: 'November 10, 2026' },
+  contact_email: { type: String, default: 'saleminfo@infinityrun.org' },
+  contact_phone: { type: String, default: '+91 98765 43210' },
+  updated_at: { type: Date, default: Date.now }
+});
+
+const adminSchema = new mongoose.Schema({
+  id: { type: Number, default: 1 },
+  name: { type: String, default: 'Infinity Admin' },
+  email: { type: String, required: true, unique: true },
+  password_hash: { type: String, required: true },
+  created_at: { type: Date, default: Date.now }
+});
+
+const Participant = mongoose.models.Participant || mongoose.model('Participant', participantSchema);
+const RaceCategory = mongoose.models.RaceCategory || mongoose.model('RaceCategory', raceCategorySchema);
+const Sponsor = mongoose.models.Sponsor || mongoose.model('Sponsor', sponsorSchema);
+const GalleryItem = mongoose.models.GalleryItem || mongoose.model('GalleryItem', gallerySchema);
+const Faq = mongoose.models.Faq || mongoose.model('Faq', faqSchema);
+const ContactMessage = mongoose.models.ContactMessage || mongoose.model('ContactMessage', contactMessageSchema);
+const EventSetting = mongoose.models.EventSetting || mongoose.model('EventSetting', eventSettingSchema);
+const Admin = mongoose.models.Admin || mongoose.model('Admin', adminSchema);
 
 async function initializeDatabase() {
-  // 1. Try MySQL connection using DB_* env variables
-  let mysqlConnected = false;
-  let connection = null;
-
   try {
-    connection = await mysql.createConnection({
-      host: dbConfig.host,
-      port: dbConfig.port,
-      user: dbConfig.user,
-      password: dbConfig.password,
-      multipleStatements: true
-    });
-    mysqlConnected = true;
-    console.log(`[DB] Connected to MySQL server successfully (host: ${dbConfig.host}, user: ${dbConfig.user}, db: ${dbConfig.database})`);
-  } catch (err) {
-    console.warn(`[DB] Primary MySQL connection attempt failed (${err.message}). Trying fallback parameters...`);
-    // Local development fallback helper
-    const fallbackPasswords = [process.env.DB_PASSWORD, 'Gayu_@2317', 'root', '', 'admin123'].filter(Boolean);
-    for (const pwd of fallbackPasswords) {
-      try {
-        connection = await mysql.createConnection({
-          host: dbConfig.host,
-          port: dbConfig.port,
-          user: dbConfig.user,
-          password: pwd,
-          multipleStatements: true
-        });
-        dbConfig.password = pwd;
-        mysqlConnected = true;
-        console.log(`[DB] Connected to local MySQL server using environment credentials.`);
-        break;
-      } catch (e) {
-        // continue
-      }
-    }
-  }
-
-  if (mysqlConnected && connection) {
-    activeDriver = 'mysql';
-    try {
-      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\``);
-      await connection.query(`USE \`${dbConfig.database}\``);
-
-      mysqlPool = mysql.createPool(dbConfig);
-
-      const schemaPath = path.join(__dirname, '../database/schema.sql');
-      if (fs.existsSync(schemaPath)) {
-        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-        await connection.query(schemaSql);
-        await connection.query('CREATE OR REPLACE VIEW infinity_run AS SELECT * FROM participants');
-        console.log('[DB] Applied MySQL schema, views & seeds.');
-      }
-
-      await seedAdmin(poolWrapper);
-      console.log('[DB] MySQL database initialized successfully.');
-      await connection.end();
-      return;
-    } catch (err) {
-      console.warn('[DB] MySQL setup warning:', err.message);
-      if (connection) await connection.end();
-    }
-  }
-
-  // 2. Fallback to SQLite if local MySQL server is not running
-  if (sqlite3) {
-    console.log('[DB] Using SQLite embedded engine as local database provider...');
-    activeDriver = 'sqlite';
-
-    const dbDir = path.join(__dirname, '../database');
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
+    // 1. Seed default race categories if empty
+    const raceCount = await RaceCategory.countDocuments();
+    if (raceCount === 0) {
+      await RaceCategory.insertMany([
+        { id: 1, name: '3K Fun Run', distance: '3K', fee: 499, description: 'Ideal for beginners, families, and casual runners looking to be part of the movement.', age_limit: 'Open to all ages', status: 'active' },
+        { id: 2, name: '5K Run', distance: '5K', fee: 699, description: 'A popular distance for fitness enthusiasts testing their endurance and speed.', age_limit: 'Min. 12 years old', status: 'active' },
+        { id: 3, name: '10K Challenge', distance: '10K', fee: 899, description: 'A timed competitive race for seasoned runners seeking speed and endurance.', age_limit: 'Min. 15 years old', status: 'active' },
+        { id: 4, name: '21K Half Marathon', distance: '21K', fee: 1199, description: 'The flagship endurance test with chip timing, pace pacers, and prize purse.', age_limit: 'Min. 18 years old', status: 'active' }
+      ]);
+      console.log('[MongoDB Atlas] Seeded default race categories.');
     }
 
-    const sqlitePath = path.join(dbDir, 'infinity_run.sqlite');
-    sqliteDb = new sqlite3.Database(sqlitePath);
+    // 2. Seed default admin user if empty
+    const adminCount = await Admin.countDocuments();
+    if (adminCount === 0) {
+      const defaultEmail = (process.env.ADMIN_DEFAULT_EMAIL || 'admin@infinityrun.com').trim().toLowerCase();
+      const defaultPass = process.env.ADMIN_DEFAULT_PASS || 'admin123';
+      const hashedPassword = bcrypt.hashSync(defaultPass, 10);
 
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS admins (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS race_categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        distance TEXT NOT NULL,
-        description TEXT,
-        age_limit TEXT,
-        fee REAL NOT NULL,
-        status TEXT DEFAULT 'active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS participants (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        registration_id TEXT UNIQUE NOT NULL,
-        full_name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        mobile TEXT NOT NULL,
-        dob TEXT NOT NULL,
-        gender TEXT NOT NULL,
-        blood_group TEXT NOT NULL,
-        race_category_id INTEGER NOT NULL,
-        t_shirt_size TEXT NOT NULL,
-        emergency_name TEXT NOT NULL,
-        emergency_mobile TEXT NOT NULL,
-        emergency_relation TEXT NOT NULL,
-        medical_info TEXT,
-        registration_status TEXT DEFAULT 'Confirmed',
-        payment_status TEXT DEFAULT 'Paid',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS sponsors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        logo TEXT NOT NULL,
-        tier TEXT NOT NULL,
-        website TEXT,
-        status TEXT DEFAULT 'active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS gallery (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        image_url TEXT NOT NULL,
-        title TEXT,
-        status TEXT DEFAULT 'active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS faq (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        question TEXT NOT NULL,
-        answer TEXT NOT NULL,
-        status TEXT DEFAULT 'active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS contact_messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT,
-        subject TEXT,
-        message TEXT NOT NULL,
-        status TEXT DEFAULT 'Unread',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    await querySqlite(`
-      CREATE TABLE IF NOT EXISTS event_settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        event_name TEXT DEFAULT 'Infinity Run',
-        event_date TEXT DEFAULT 'Sunday, November 15, 2026',
-        venue TEXT DEFAULT 'Salem Sports Complex & Mahatma Gandhi Stadium',
-        location TEXT DEFAULT 'Salem, Tamil Nadu',
-        reporting_time TEXT DEFAULT '05:00 AM',
-        flagoff_time TEXT DEFAULT '05:30 AM (21K) | 06:00 AM (10K) | 06:30 AM (5K/3K)',
-        registration_deadline TEXT DEFAULT 'November 10, 2026',
-        contact_email TEXT DEFAULT 'saleminfo@infinityrun.org',
-        contact_phone TEXT DEFAULT '+91 98765 43210',
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Seed default race categories if empty
-    const [races] = await querySqlite('SELECT COUNT(*) as count FROM race_categories');
-    if (!races || !races[0] || races[0].count === 0) {
-      await querySqlite(`
-        INSERT INTO race_categories (id, name, distance, description, age_limit, fee, status) VALUES
-        (1, '3K Fun Run', '3K', 'Ideal for beginners, families, and casual runners looking to be part of the movement.', 'Open to all ages', 499.00, 'active'),
-        (2, '5K Run', '5K', 'A popular distance for fitness enthusiasts testing their endurance and speed.', 'Min. 12 years old', 699.00, 'active'),
-        (3, '10K Challenge', '10K', 'A timed competitive race for seasoned runners seeking speed and endurance.', 'Min. 15 years old', 899.00, 'active'),
-        (4, '21K Half Marathon', '21K', 'The flagship endurance test with chip timing, pace pacers, and prize purse.', 'Min. 18 years old', 1199.00, 'active');
-      `);
+      await Admin.create({
+        id: 1,
+        name: 'Infinity Admin',
+        email: defaultEmail,
+        password_hash: hashedPassword
+      });
+      console.log(`[MongoDB Atlas] Seeded default admin user: ${defaultEmail}`);
     }
 
-    await seedAdmin(poolWrapper);
-    console.log('[DB] SQLite database initialized successfully.');
-  }
-}
-
-async function seedAdmin(pool) {
-  try {
-    const defaultEmail = (process.env.ADMIN_DEFAULT_EMAIL || 'admin@infinityrun.com').trim().toLowerCase();
-    const defaultPass = process.env.ADMIN_DEFAULT_PASS || 'admin123';
-
-    const [rows] = await pool.query('SELECT * FROM admins WHERE LOWER(email) = ?', [defaultEmail]);
-    if (rows.length === 0) {
-      const hashedPassword = await bcrypt.hash(defaultPass, 10);
-      await pool.query(
-        'INSERT INTO admins (name, email, password_hash) VALUES (?, ?, ?)',
-        ['Infinity Admin', defaultEmail, hashedPassword]
-      );
-      console.log(`[DB Seed] Default admin created in MySQL: ${defaultEmail}`);
+    // 3. Seed default event settings if empty
+    const settingCount = await EventSetting.countDocuments();
+    if (settingCount === 0) {
+      await EventSetting.create({
+        id: 1,
+        event_name: 'Infinity Run',
+        event_date: 'Sunday, November 15, 2026',
+        venue: 'Salem Sports Complex & Mahatma Gandhi Stadium',
+        location: 'Salem, Tamil Nadu',
+        reporting_time: '05:00 AM',
+        flagoff_time: '05:30 AM (21K) | 06:00 AM (10K) | 06:30 AM (5K/3K)',
+        registration_deadline: 'November 10, 2026',
+        contact_email: 'saleminfo@infinityrun.org',
+        contact_phone: '+91 98765 43210'
+      });
+      console.log('[MongoDB Atlas] Seeded default event settings.');
     }
   } catch (err) {
-    console.error('[DB Seed] Error seeding admin:', err.message);
+    console.error('[MongoDB Atlas] Database seed warning:', err.message);
   }
 }
 
 module.exports = {
-  getPool,
-  initializeDatabase,
-  poolWrapper
+  connectDB,
+  Participant,
+  RaceCategory,
+  Sponsor,
+  GalleryItem,
+  Faq,
+  ContactMessage,
+  EventSetting,
+  Admin
 };

@@ -16,11 +16,12 @@ exports.create = async (req, res) => {
       status: 'Unread'
     });
 
-    console.log(`[MongoDB] New contact message saved from: ${name} (${email})`);
+    console.log(`[MongoDB Atlas] New contact message saved from: ${name} (${email})`);
 
     res.status(201).json({
       success: true,
       message: 'Message sent successfully!',
+      id: newMessage._id.toString(),
       contact: newMessage
     });
   } catch (err) {

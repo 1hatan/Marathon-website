@@ -4,7 +4,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 require('dotenv').config();
 
-const { initializeDatabase } = require('./db');
+const { connectDB } = require('./db');
 
 const authRoutes = require('./routes/authRoutes');
 const participantRoutes = require('./routes/participantRoutes');
@@ -42,23 +42,19 @@ app.use(cors({
 
 app.use(express.json());
 
-// Serverless DB Auto-initialization Middleware for Vercel
-let dbInitialized = false;
+// Serverless / App DB Connection Middleware
 app.use(async (req, res, next) => {
-  if (!dbInitialized) {
-    try {
-      await initializeDatabase();
-      dbInitialized = true;
-    } catch (e) {
-      console.error('Database serverless init warning:', e.message);
-    }
+  try {
+    await connectDB();
+  } catch (e) {
+    console.error('Database connection middleware warning:', e.message);
   }
   next();
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Infinity Run Backend API', timestamp: new Date() });
+  res.json({ status: 'ok', service: 'Infinity Run Backend API (MongoDB Atlas)', timestamp: new Date() });
 });
 
 // API Routes
@@ -83,16 +79,16 @@ const PORT = process.env.PORT || 5000;
 if (require.main === module) {
   async function startServer() {
     try {
-      await initializeDatabase();
-      dbInitialized = true;
+      await connectDB();
       app.listen(PORT, () => {
         console.log(`=================================================`);
         console.log(`  Infinity Run API Server running on port ${PORT}`);
+        console.log(`  Database Engine: MongoDB Atlas`);
         console.log(`  Health Check: http://localhost:${PORT}/api/health`);
         console.log(`=================================================`);
       });
     } catch (err) {
-      console.error('Failed to initialize database or start server:', err);
+      console.error('Failed to connect to MongoDB Atlas or start server:', err);
     }
   }
   startServer();
