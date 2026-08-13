@@ -109,7 +109,52 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 2. RACE CATEGORIES HOME SUMMARY SECTION */}
+      {/* 2. STATS & OFFICIAL REGISTRATION BAR MATCHING SCREENSHOT */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          
+          <div className="md:col-span-6 bg-gray-900 text-white rounded-3xl p-5 relative overflow-hidden flex items-center justify-between shadow-sm">
+            <img 
+              src="https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&auto=format&fit=crop&q=80" 
+              alt="Race Crowd" 
+              className="absolute inset-0 w-full h-full object-cover opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+
+            <div className="relative z-10 grid grid-cols-3 gap-6 w-full text-center sm:text-left">
+              <div>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 block font-outfit">Distances</span>
+                <span className="text-3xl font-black font-outfit text-white">04</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 block font-outfit">Avg. Air Temp</span>
+                <span className="text-3xl font-black font-outfit text-white">48f</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 block font-outfit">Airport</span>
+                <span className="text-3xl font-black font-outfit text-white">DCA</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="md:col-span-6 bg-rock-yellow rounded-3xl p-5 flex items-center justify-between shadow-sm">
+            <div className="flex flex-col">
+              <span className="text-xs font-black tracking-wider uppercase text-black font-outfit">OFFICIAL REGISTRATION OPEN</span>
+              <span className="text-sm font-bold text-gray-800">Secure your bib for Infinity Run 2026</span>
+            </div>
+            <Link
+              to="/register"
+              className="inline-flex items-center gap-1 bg-black text-white font-extrabold text-xs px-5 py-3 rounded-full hover:bg-gray-800 transition-colors shrink-0 font-outfit"
+            >
+              <span>REGISTER NOW</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 3. RACE CATEGORIES HOME SUMMARY SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -171,7 +216,7 @@ export default function HomePage() {
 
       </section>
 
-      {/* 3. INFINITY RUN BRANDING & RUNNING ATHLETE FEATURE SECTION (RIGHT AFTER RACE CATEGORIES) */}
+      {/* 4. INFINITY RUN BRANDING & RUNNING ATHLETE FEATURE SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
