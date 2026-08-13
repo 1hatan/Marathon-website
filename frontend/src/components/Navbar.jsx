@@ -34,7 +34,7 @@ export default function Navbar() {
     <header className="w-full bg-white text-black font-sans z-50 sticky top-0 shadow-sm border-b border-gray-100">
       
       {/* MAIN HEADER NAVBAR */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <div className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
         
         {/* Brand Logo */}
         <Link to="/" className="flex flex-col group shrink-0">
