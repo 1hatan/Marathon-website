@@ -8,7 +8,6 @@ import IntroLoader from './components/IntroLoader';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import PrizesPage from './pages/PrizesPage';
-import SponsorsPage from './pages/SponsorsPage';
 import GalleryPage from './pages/GalleryPage';
 import FAQPage from './pages/FAQPage';
 import RegisterPage from './pages/RegisterPage';
@@ -59,7 +58,6 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/prizes" element={<PrizesPage />} />
-          <Route path="/sponsors" element={<SponsorsPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/contact" element={<ContactPage />} />

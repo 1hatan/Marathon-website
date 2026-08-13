@@ -15,11 +15,27 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Prizes', path: '/prizes' },
-    { name: 'Sponsors', path: '/sponsors' },
     { name: 'Gallery', path: '/gallery' },
     { name: 'FAQ', path: '/faq' },
     { name: 'Contact', path: '/contact' },
   ];
+
+  const handleNavClick = (e, link) => {
+    setMobileMenuOpen(false);
+    if (location.pathname === '/') {
+      if (link.path === '/') {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const sectionId = link.path.replace('/', '');
+        const elem = document.getElementById(sectionId);
+        if (elem) {
+          e.preventDefault();
+          elem.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }
+  };
 
   const isActive = (path) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -49,6 +65,7 @@ export default function Navbar() {
             <Link
               key={link.name}
               to={link.path}
+              onClick={(e) => handleNavClick(e, link)}
               className={`py-1.5 transition-colors relative ${
                 isActive(link.path)
                   ? 'text-black border-b-2 border-rock-yellow font-black'
@@ -60,7 +77,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Far Right Action Buttons: REGISTER NOW button & LOGIN ↗ outline pill button */}
+        {/* Far Right Action Buttons: REGISTER NOW button */}
         <div className="hidden sm:flex items-center space-x-4 text-xs font-bold shrink-0">
           {/* REGISTER NOW CTA Button */}
           <Link
@@ -68,15 +85,6 @@ export default function Navbar() {
             className="inline-flex items-center gap-1 bg-rock-yellow hover:bg-rock-yellowHover text-black px-4 py-1.5 rounded-full font-black tracking-wide shadow-sm hover:shadow-md transition-all text-xs"
           >
             <span>REGISTER NOW</span>
-            <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
-          </Link>
-
-          {/* LOGIN Outline Pill Button with Arrow */}
-          <Link
-            to="/admin/login"
-            className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full border border-black text-black hover:bg-black hover:text-white transition-all text-xs font-black tracking-wide"
-          >
-            <span>LOGIN</span>
             <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
           </Link>
         </div>
@@ -87,14 +95,7 @@ export default function Navbar() {
             to="/register"
             className="bg-rock-yellow text-black px-3 py-1 rounded-full text-xs font-black"
           >
-            REGISTER
-          </Link>
-
-          <Link
-            to="/admin/login"
-            className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full border border-black text-black text-xs font-bold"
-          >
-            <span>LOGIN</span>
+            REGISTER NOW
           </Link>
 
           <button
@@ -116,6 +117,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.path}
+                onClick={(e) => handleNavClick(e, link)}
                 className={`py-2 border-b border-gray-100 transition-colors ${
                   isActive(link.path) ? 'text-rock-cyan font-black' : 'hover:text-black'
                 }`}

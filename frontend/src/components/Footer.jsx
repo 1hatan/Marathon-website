@@ -29,7 +29,6 @@ export default function Footer() {
               <li><Link to="/" className="hover:text-rock-yellow transition-colors">Home</Link></li>
               <li><Link to="/about" className="hover:text-rock-yellow transition-colors">About & Event Info</Link></li>
               <li><Link to="/prizes" className="hover:text-rock-yellow transition-colors">Prizes & Awards</Link></li>
-              <li><Link to="/sponsors" className="hover:text-rock-yellow transition-colors">Sponsors & Partners</Link></li>
               <li><Link to="/gallery" className="hover:text-rock-yellow transition-colors">Photo Gallery</Link></li>
               <li><Link to="/faq" className="hover:text-rock-yellow transition-colors">Frequently Asked Questions</Link></li>
               <li><Link to="/contact" className="hover:text-rock-yellow transition-colors">Contact Support</Link></li>
@@ -75,11 +74,6 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-slate-800/90 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
           <p>© {new Date().getFullYear()} Infinity Run. All Rights Reserved.</p>
-          <div className="flex items-center gap-6">
-            <Link to="/admin/login" className="flex items-center gap-1.5 hover:text-rock-yellow transition-colors font-semibold">
-              <Lock className="w-3.5 h-3.5" /> Admin Portal
-            </Link>
-          </div>
         </div>
       </div>
     </footer>
