@@ -94,7 +94,7 @@ const sponsorSchema = new mongoose.Schema({
 
 const gallerySchema = new mongoose.Schema({
   id: { type: Number },
-  title: { type: String, required: true },
+  title: { type: String, default: 'Event Photo' },
   image_url: { type: String, required: true },
   category: { type: String, default: 'General' },
   status: { type: String, default: 'active' },

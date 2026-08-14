@@ -21,7 +21,7 @@ exports.create = async (req, res) => {
     }
 
     const newItem = await GalleryItem.create({
-      title: title || '',
+      title: title ? title.trim() : 'Event Photo',
       image_url,
       category: category || 'General',
       status: status || 'active'
