@@ -68,6 +68,24 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingsRoutes);
 
+// Serve frontend static production build files for unified Render deployment
+const fs = require('fs');
+const frontendDistPath = path.resolve(__dirname, '../frontend/dist');
+
+app.use(express.static(frontendDistPath));
+
+// SPA Fallback for client-side routing (/admin/login, /admin, /register, /about, /contact, etc.)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  next();
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Express Error:', err);
