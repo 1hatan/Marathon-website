@@ -135,8 +135,8 @@ export default function HomePage() {
           
           {/* Main Running Video */}
           <video
-            src="https://res.cloudinary.com/bgr6hlyu/video/upload/v1786669965/VID_20260813_224356.mp4"
-            poster="https://res.cloudinary.com/bgr6hlyu/video/upload/v1786669965/VID_20260813_224356.jpg"
+            src="https://res.cloudinary.com/bgr6hlyu/video/upload/v1786680194/VID_20260813_224356_2.mp4"
+            poster="https://res.cloudinary.com/bgr6hlyu/video/upload/v1786680194/VID_20260813_224356_2.jpg"
             autoPlay
             loop
             muted
