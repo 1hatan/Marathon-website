@@ -7,6 +7,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        brand: {
+          crimson: '#E6005C',
+          crimsonHover: '#CC0052',
+          pink: '#FF2E7E',
+          cyan: '#00A3FF',
+          teal: '#00C896',
+          dark: '#0B0F19',
+          canvas: '#FAF9FC',
+          slate: '#1E293B',
+          muted: '#64748B',
+        },
         rock: {
           blue: '#1DA1F2',
           cyan: '#00A3FF',

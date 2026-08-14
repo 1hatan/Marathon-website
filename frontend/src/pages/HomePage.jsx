@@ -3,10 +3,14 @@ import { Link } from 'react-router-dom';
 import {
   ArrowUpRight,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Calendar,
+  MapPin,
+  Activity,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { fetchSettings, fetchRaces } from '../services/api';
-import RunningMan from '../components/RunningMan';
 
 export default function HomePage() {
   const [settings, setSettings] = useState({
@@ -46,47 +50,124 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans pb-16 space-y-12 sm:space-y-16">
-
-      {/* 1. HERO SECTION — RUNNING MAN ANIMATION */}
-      <section className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        <div className="relative rounded-3xl sm:rounded-[40px] overflow-hidden shadow-2xl border-4 border-white min-h-[70vh] sm:min-h-[580px] lg:min-h-[640px] flex items-center justify-center bg-gray-900 text-white">
+    <div className="w-full bg-white text-black font-sans antialiased overflow-x-hidden">
+      
+      {/* 1. HERO SECTION — EXACT 55% / 45% SPLIT, 100VH ON DESKTOP */}
+      <section className="w-full min-h-[calc(100vh-65px)] lg:h-[calc(100vh-65px)] flex flex-col lg:flex-row items-stretch overflow-hidden bg-white relative">
+        
+        {/* LEFT COLUMN — EXACTLY 55% WIDTH ON DESKTOP */}
+        <div className="w-full lg:w-[55%] h-full flex flex-col justify-between px-6 sm:px-12 md:px-16 lg:px-16 xl:px-24 py-10 lg:py-12 z-10 relative bg-white">
           
-          {/* Hero Content Overlay */}
-          <div className="relative z-10 max-w-4xl mx-auto text-center px-6 py-8 flex flex-col items-center justify-center space-y-6">
-            
-            {/* Animated Running Man */}
-            <RunningMan />
+          {/* Subtle background geometric accent */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#111827_1px,transparent_1px)] [background-size:24px_24px]" />
+          
+          {/* Top Label */}
+          <div className="space-y-4 hero-enter delay-100">
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black text-white text-xs font-black tracking-widest uppercase font-outfit shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-rock-yellow animate-ping" />
+              <span>INFINITY RUN</span>
+              <span className="text-gray-500">|</span>
+              <span className="text-gray-300 text-[11px] font-bold">2026 EDITION</span>
+            </div>
+          </div>
 
-            {/* Hero CTAs */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center gap-4">
+          {/* Core Content Area */}
+          <div className="my-auto py-6 space-y-6 max-w-2xl">
+            
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-6xl lg:text-5xl xl:text-6xl font-black font-outfit uppercase tracking-tight leading-[1.08] text-black hero-enter delay-200">
+              Every Step Creates a{' '}
+              <span className="text-rock-yellow block sm:inline">
+                Better Tomorrow.
+              </span>
+            </h1>
+
+            {/* Supporting Text */}
+            <p className="text-sm sm:text-base lg:text-base xl:text-lg text-gray-600 font-medium leading-relaxed max-w-xl hero-enter delay-300">
+              Join thousands of runners in Salem’s ultimate premier marathon event. Unleash your potential, conquer new distances, and run toward a stronger, healthier future.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 hero-enter delay-400">
+              
+              {/* Primary Filled Button — Rock Yellow */}
               <Link
                 to="/register"
-                className="inline-flex items-center gap-2 bg-rock-yellow hover:bg-rock-yellowHover text-black font-black px-8 py-4 rounded-full text-xs sm:text-sm uppercase font-outfit tracking-wider shadow-xl hover:shadow-2xl hover:scale-105 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2.5 bg-rock-yellow hover:bg-rock-yellowHover text-black font-black px-8 py-4 rounded-full text-xs sm:text-sm uppercase font-outfit tracking-wider shadow-xl hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] transition-all cursor-pointer group"
               >
                 <span>REGISTER NOW</span>
-                <ArrowUpRight className="w-5 h-5 stroke-[3]" />
+                <ArrowUpRight className="w-4 h-4 stroke-[3] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
+
+              {/* Secondary Outlined Button — Black Border */}
               <Link
                 to="/about"
-                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm font-black px-6 py-4 rounded-full text-xs sm:text-sm uppercase font-outfit tracking-wider transition-all"
+                className="inline-flex items-center justify-center gap-2 bg-transparent hover:bg-black hover:text-white text-black border-2 border-black font-black px-7 py-3.5 rounded-full text-xs sm:text-sm uppercase font-outfit tracking-wider transition-all group"
               >
-                <span>EXPLORE ABOUT</span>
-                <ChevronRight className="w-4 h-4 stroke-[3]" />
+                <span>EXPLORE EVENT</span>
+                <ChevronRight className="w-4 h-4 stroke-[3] transition-transform group-hover:translate-x-1" />
               </Link>
+
             </div>
 
           </div>
+
+          {/* Bottom Highlights & Event Metadata */}
+          <div className="pt-6 border-t border-gray-100 flex flex-wrap items-center gap-y-3 gap-x-6 text-xs font-bold text-gray-500 hero-enter delay-500">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-rock-yellow" />
+              <span className="text-black font-extrabold font-outfit">{settings.event_date}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-rock-cyan" />
+              <span className="text-black font-extrabold font-outfit">{settings.location}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-black" />
+              <span className="text-black font-extrabold font-outfit">21K | 10K | 5K | 3K</span>
+            </div>
+          </div>
+
         </div>
+
+        {/* RIGHT COLUMN — EXACTLY 45% WIDTH ON DESKTOP WITH PROMINENT VIDEO */}
+        <div className="w-full lg:w-[45%] h-[55vh] lg:h-full relative overflow-hidden bg-black shrink-0">
+          
+          {/* Main Running Video */}
+          <video
+            src="https://res.cloudinary.com/bgr6hlyu/video/upload/v1786669965/VID_20260813_224356.mp4"
+            poster="https://res.cloudinary.com/bgr6hlyu/video/upload/v1786669965/VID_20260813_224356.jpg"
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls={false}
+            className="w-full h-full object-cover object-center scale-105 transform hover:scale-100 transition-transform duration-1000"
+          />
+
+          {/* Subtle Left Edge Gradient Blend Overlay */}
+          <div className="absolute top-0 left-0 bottom-0 w-16 bg-gradient-to-r from-white via-white/20 to-transparent pointer-events-none hidden lg:block" />
+
+          {/* Subtle Bottom Gradient Blend Overlay for Mobile */}
+          <div className="absolute left-0 right-0 top-0 h-12 bg-gradient-to-b from-white via-white/20 to-transparent pointer-events-none lg:hidden" />
+
+          {/* Floating Subtle Live Runner Tag */}
+          <div className="absolute bottom-6 right-6 z-20 backdrop-blur-md bg-black/70 border border-white/20 px-4 py-2 rounded-2xl text-white text-xs font-bold flex items-center gap-2.5 shadow-2xl">
+            <span className="w-2.5 h-2.5 rounded-full bg-rock-yellow animate-pulse" />
+            <span className="font-outfit uppercase tracking-wider text-[11px] font-black">Official Marathon Highlight</span>
+          </div>
+
+        </div>
+
       </section>
 
-      {/* 2. RACE CATEGORIES HOME SUMMARY SECTION */}
-      <section className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* 2. RACE CATEGORIES SUMMARY SECTION */}
+      <section className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
+          <div className="space-y-1">
             <span className="text-xs font-black tracking-widest text-rock-cyan uppercase block mb-1 font-outfit">Race Categories</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-black uppercase font-outfit tracking-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-black uppercase font-outfit tracking-tight">
               Choose Your <span className="text-rock-yellow">Challenge</span>
             </h2>
           </div>
@@ -127,7 +208,7 @@ export default function HomePage() {
 
               <Link
                 to="/register"
-                className="w-full inline-flex items-center justify-center gap-2 bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold text-xs py-3 px-4 rounded-xl transition-all shadow-sm group-hover:shadow-md"
+                className="w-full inline-flex items-center justify-center gap-2 bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold text-xs py-3 px-4 rounded-xl transition-all shadow-sm group-hover:shadow-md uppercase font-outfit"
               >
                 <span>REGISTER NOW</span>
                 <ChevronRight className="w-4 h-4 stroke-[3] transition-transform group-hover:translate-x-1" />
@@ -142,11 +223,8 @@ export default function HomePage() {
       <section className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
-          {/* Left Column: Title, Description, Sponsor Logos, Hazard Tape */}
           <div className="lg:col-span-8 space-y-8 flex flex-col justify-between">
-            
             <div className="space-y-3">
-              {/* Title Block */}
               <div className="space-y-1 font-outfit">
                 <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-none text-black uppercase">
                   Infinity <span className="text-stroke-light text-gray-300 font-extrabold">Run</span>
@@ -155,15 +233,12 @@ export default function HomePage() {
                   Salem Tamil Nadu 2026
                 </h3>
               </div>
-
-              {/* Description Paragraph */}
               <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-2xl font-normal pt-2">
                 Historic heritage, scenic Yercaud foothills, vibrant culture, true local flavor – Salem, Tamil Nadu is a place unlike any other. Join thousands of runners creating an unforgettable experience with Infinity Run. Every step creates a better tomorrow.
               </p>
             </div>
 
             <div className="space-y-6">
-              {/* Partner Logos Row */}
               <div className="pt-4 border-t border-gray-100">
                 <span className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase block mb-4">Official Partners</span>
                 <div className="flex flex-wrap items-center gap-8 text-xs font-black text-gray-800 tracking-wider">
@@ -182,15 +257,12 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Caution Hazard Stripe Tape Accent */}
               <div>
                 <div className="h-6 w-full bg-hazard-stripes rounded-md shadow-sm transform -skew-x-12" />
               </div>
             </div>
-
           </div>
 
-          {/* Right Column: Running Athlete Feature Card */}
           <div className="lg:col-span-4 bg-gray-900 rounded-3xl overflow-hidden relative min-h-[380px] flex flex-col justify-end p-6 group shadow-lg border-2 border-gray-100 hover:border-black transition-all">
             <img 
               src="https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&auto=format&fit=crop&q=80" 

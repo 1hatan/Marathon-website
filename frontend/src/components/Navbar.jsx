@@ -69,7 +69,7 @@ export default function Navbar() {
           {/* REGISTER NOW CTA Button */}
           <Link
             to="/register"
-            className="inline-flex items-center gap-1 bg-rock-yellow hover:bg-rock-yellowHover text-black px-4 py-1.5 rounded-full font-black tracking-wide shadow-sm hover:shadow-md transition-all text-xs"
+            className="inline-flex items-center gap-1 bg-rock-yellow hover:bg-rock-yellowHover text-black px-4 py-2 rounded-full font-black tracking-wide shadow-sm hover:shadow-md hover:scale-105 transition-all text-xs uppercase"
           >
             <span>REGISTER NOW</span>
             <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
