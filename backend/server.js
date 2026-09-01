@@ -70,7 +70,9 @@ app.use('/api/settings', settingsRoutes);
 
 // Serve frontend static production build files for unified Render deployment
 const fs = require('fs');
-const frontendDistPath = path.resolve(__dirname, '../frontend/dist');
+const frontendDistPath = fs.existsSync(path.resolve(__dirname, '../frontend/dist'))
+  ? path.resolve(__dirname, '../frontend/dist')
+  : path.resolve(process.cwd(), 'frontend/dist');
 
 app.use(express.static(frontendDistPath));
 
@@ -83,7 +85,17 @@ app.get('*', (req, res, next) => {
   if (fs.existsSync(indexPath)) {
     return res.sendFile(indexPath);
   }
-  next();
+  res.status(404).send(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>404 - Frontend Not Built</title></head>
+      <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+        <h2>Frontend Build Not Found</h2>
+        <p>The backend is running, but the frontend distribution files were not found at <code>${frontendDistPath}</code>.</p>
+        <p><strong>To fix this on Render:</strong> Set your Web Service <strong>Build Command</strong> to: <br/><code>npm install && npm run build</code></p>
+      </body>
+    </html>
+  `);
 });
 
 // Error handling middleware

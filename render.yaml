@@ -1,10 +1,9 @@
 services:
-  # 1. Backend Web Service (Node.js Express API)
+  # Unified Web Service (Hosts both Frontend UI & Express Backend API)
   - type: web
-    name: infinity-run-backend
+    name: infinity-run-marathon
     env: node
-    rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm run render-build
     startCommand: npm start
     envVars:
       - key: MONGODB_URI
@@ -18,20 +17,4 @@ services:
       - key: FRONTEND_URL
         sync: false
 
-  # 2. Frontend Static Site (Vite React App)
-  - type: static
-    name: infinity-run-frontend
-    rootDir: frontend
-    buildCommand: npm run build
-    publishDir: dist
-    routes:
-      - type: rewrite
-        source: "/*"
-        destination: "/index.html"
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: infinity-run-backend
-          property: url
 
