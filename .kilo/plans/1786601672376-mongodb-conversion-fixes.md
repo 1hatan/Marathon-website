@@ -1,6 +1,6 @@
 # MongoDB Conversion — Cleanup & Fix Plan
 
-## Status: implementation-ready (static verification passed; 4 remaining gaps)
+## Status: implementation-ready (static verification passed; primary admin bug located)
 
 ## Goal
 Finalize the MySQL→MongoDB Atlas migration so the full stack runs end-to-end, fix the regressions/config drift introduced by the partial conversion, and add a validation checklist.
@@ -11,22 +11,41 @@ Finalize the MySQL→MongoDB Atlas migration so the full stack runs end-to-end, 
 - All 8 controllers, 8 routes, `middleware/authMiddleware.js`, `api/index.js`: **parse with `node --check`**. ✅
 - `backend/package.json`: `mongoose ^8.0.0`, `mysql2`/`sqlite3` removed. ✅
 - `.env` / `backend/.env` / both `.env.example`: consistently migrated to `MONGODB_URI`, `PORT=5050`, `VITE_API_URL=http://localhost:5050`. ✅
-- Fixes already applied (no action): `?admin=true` honored by race/sponsor/gallery/faq controllers; `dashboardController` now returns `tshirtMatrix`; `getById` projects safe fields for public lookups (PII no longer leaked); CORS no longer unconditionally permissive.
+- Fixes already applied (no action): `?admin=true` honored by race/sponsor/gallery/faq controllers; `dashboardController` now returns `tshirtMatrix`; `getById` projects safe fields for public lookups (PII no longer leaked); CORS no longer unconditionally permissive; `backend/test_db_flow.js` (broken mysql2 stub) deleted.
 
 ## Remaining gaps to fix
 
-### R1 — `fetchRaces` has no admin param; Admin races page can't see inactive races (regression)
-After conversion, `raceController.getAll` filters `status='active'` unless `?admin=true` is sent. But the frontend `fetchRaces()` never sends it, so `AdminRaces` only lists active races → setting a race inactive makes it un-editable (same trap the user fixed for sponsors/gallery/faq).
-- `frontend/src/services/api.js` (line 70): make `fetchRaces(isAdmin = false)` and append `?admin=true`.
-- `frontend/src/pages/admin/AdminRaces.jsx` (line 27): call `fetchRaces(true)`.
+### R1 (PRIMARY — admin panel bug) — Sponsors / Gallery / FAQ edit & delete silently fail (500)
+Confirmed by static trace + schema inspection. The three schemas (`sponsorSchema`, `gallerySchema`, `faqSchema`) each declare an explicit numeric path `id: { type: Number }` with **no default**. When Mongoose documents are created, that `id` is never set → it stays `undefined`. Because an explicit `id` path shadows Mongoose's default `id` virtual (which would otherwise return `_id.toString()`), `doc.id` is `undefined` for these collections.
+
+The frontend admin pages reference `.id` on every document:
+- `AdminSponsors.jsx` L95 `key={s.id}`, L114 `handleDelete(s.id)`, L67 `updateSponsor(editingSponsor.id, form)`
+- `AdminGallery.jsx` L91 `key={item.id}`, L105 `handleDelete(item.id)`, L63 `updateGallery(editingPhoto.id, form)`
+- `AdminFAQ.jsx` L91 `key={faq.id}`, L98 `handleDelete(faq.id)`, L63 `updateFaq(editingFaq.id, form)`
+
+Meanwhile the controllers' `getAll` return **raw `.lean()` docs with no `_id→id` normalization**:
+- `sponsorController.getAll` L8 `res.json({ success, sponsors })` ← sponsors have `id: undefined` (JSON omits it)
+- `galleryController.getAll` L9
+- `faqController.getAll` L9
+
+Contrast with the two working controllers that DO normalize: `participantController.getAll` (`id: p._id.toString()`) and `contactController.getAll` (`id: m._id.toString()`). Races also work because `raceCategorySchema.id` is a seeded/populated number.
+
+Trace of the failure: admin clicks Delete on a sponsor → `handleDelete(undefined)` → `api.delete('/sponsors/undefined')` → `sponsorController.delete` → `Sponsor.findByIdAndDelete('undefined')` → Mongoose `CastError: Cast to ObjectId failed for value "undefined"` → 500 → frontend `catch` logs to console and the item is left in the list (silent failure, no toast). Same 500 on Edit (PUT `/{model}/undefined`).
+
+**Fix (minimal, matches existing pattern in participant/contact controllers):** normalize `_id`→`id` in each `getAll`:
+```js
+// sponsorController.js / galleryController.js / faqController.js getAll
+const items = await <Model>.find(filter).sort({ created_at: -1 }).lean();
+res.json({ success: true, <key>: items.map(d => ({ ...d, id: d._id.toString() })) });
+```
+This makes `.id` a 24-hex ObjectId string that Mongoose casts back correctly on the `findByIdAndUpdate`/`findByIdAndDelete` calls already used by the update/delete handlers — no route or frontend changes needed.
 
 ### R2 — `render.yaml` still references MySQL env vars (no `MONGODB_URI`)
 Backend env vars are `DB_HOST/DB_PORT/DB_USER/DB_PASSWORD` (MySQL), which are meaningless now. `MONGODB_URI` is missing → on Render the app falls back to the hardcoded Atlas URI in `db.js` (works, but config is misleading and non-overridable from the Render UI).
 - Replace the MySQL envVar block with: `MONGODB_URI` (`sync: false`), `FRONTEND_URL`, `JWT_SECRET` (`generateValue: true`), `ADMIN_DEFAULT_EMAIL`, `ADMIN_DEFAULT_PASS`, keep `PORT=5050`.
 
-### R3 — `backend/test_db_flow.js` references uninstalled `mysql2`
-`require('mysql2/promise')` throws MODULE_NOT_FOUND (mysql2 was removed from deps). Dead/broken leftover. Running `node backend/test_db_flow.js` crashes.
-- Delete `backend/test_db_flow.js`. (Optionally replace with a Mongo smoke test: connect → seed check → create test participant → assert dashboard stats → cleanup.)
+### R3 — `backend/test_db_flow.js` references uninstalled `mysql2` (RESOLVED)
+Verified deleted from disk (`File not found` on re-read). The broken MySQL test stub from the prior conversion has already been removed — no action required.
 
 ### R4 — `animate-fadeIn` class used but never defined
 Referenced in `Navbar.jsx`, `LightboxModal.jsx`, `ContactPage.jsx`, `RegisterPage.jsx` but `index.css` defines no `fadeIn` keyframe (Tailwind has no built-in). These transitions silently don't animate.
@@ -57,11 +76,9 @@ Referenced in `Navbar.jsx`, `LightboxModal.jsx`, `ContactPage.jsx`, `RegisterPag
 7. Verify `animate-fadeIn` elements fade in (R4) and `node backend/test_db_flow.js` no longer exists (R3).
 
 ## Files in scope
-- `frontend/src/services/api.js`
-- `frontend/src/pages/admin/AdminRaces.jsx`
-- `render.yaml`
-- `backend/test_db_flow.js` (delete)
-- `frontend/src/index.css`
+- `backend/controllers/sponsorController.js`, `galleryController.js`, `faqController.js` (PRIMARY — `getAll` id normalization)
+- `render.yaml` (R2 envVars)
+- `frontend/src/index.css` (R4 `animate-fadeIn`)
 
 ## Out of scope
 - No source schema changes (db.js models are correct as-is).
