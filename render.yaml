@@ -7,20 +7,16 @@ services:
     buildCommand: npm install
     startCommand: npm start
     envVars:
-      - key: PORT
-        value: 5050
-      - key: DB_HOST
+      - key: MONGODB_URI
         sync: false
-      - key: DB_PORT
-        value: "3306"
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_NAME
-        value: infinity_run
       - key: JWT_SECRET
         generateValue: true
+      - key: ADMIN_DEFAULT_EMAIL
+        value: admin@infinityrun.com
+      - key: ADMIN_DEFAULT_PASS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
 
   # 2. Frontend Static Site (Vite React App)
   - type: static
@@ -38,3 +34,4 @@ services:
           type: web
           name: infinity-run-backend
           property: url
+
