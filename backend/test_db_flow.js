@@ -1,71 +1,71 @@
-const mysql = require('mysql2/promise');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 require('dotenv').config();
 
+const { connectDB, Participant, RaceCategory, Admin } = require('./db');
+
 async function testDatabaseFlow() {
-  console.log('--- Testing Complete Flow: Registration Form -> Backend -> MySQL -> SELECT Data ---');
-  
-  const host = process.env.DB_HOST || 'localhost';
-  const user = process.env.DB_USER || 'root';
-  const password = process.env.DB_PASSWORD || 'Gayu_@2317';
-  const database = process.env.DB_NAME || 'infinity_run';
+  console.log('=================================================================');
+  console.log('   Testing Complete Flow: Backend -> MongoDB Atlas -> Mongoose');
+  console.log('=================================================================');
 
-  console.log(`Connecting to MySQL at ${host}:3306 as ${user} (Database: ${database})...`);
-
-  let connection;
   try {
-    connection = await mysql.createConnection({
-      host,
-      user,
-      password,
-      database
-    });
-    console.log('✓ Successfully connected to MySQL database:', database);
+    // 1. Initiate connection
+    console.log('1. Connecting to MongoDB Atlas...');
+    await connectDB();
+    console.log('✓ Successfully connected to MongoDB Atlas database!');
 
-    // 1. Show existing tables
-    const [tables] = await connection.query('SHOW TABLES');
-    console.log('✓ Existing tables and views in database:', tables.map(t => Object.values(t)[0]));
+    // 2. Query Race Categories
+    const categories = await RaceCategory.find().lean();
+    console.log(`✓ Fetched ${categories.length} active race categories:`, categories.map(c => c.name).join(', '));
 
-    // 2. Perform test INSERT into participants table
+    // 3. Perform Test Participant INSERT
     const testRegId = `INF-TEST-${Math.floor(1000 + Math.random() * 9000)}`;
-    const [insertResult] = await connection.query(`
-      INSERT INTO participants 
-      (registration_id, full_name, email, mobile, dob, gender, blood_group, race_category_id, t_shirt_size, emergency_name, emergency_mobile, emergency_relation, registration_status, payment_status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', 'Paid')
-    `, [
-      testRegId,
-      'Test Verified Runner',
-      'verified.runner@test.com',
-      '+919876543210',
-      '1996-08-15',
-      'Female',
-      'B+',
-      1,
-      'M',
-      'Emergency Contact Name',
-      '+919876543211',
-      'Parent'
-    ]);
-    console.log(`✓ Executed INSERT query into participants correctly. Inserted ID: ${insertResult.insertId}`);
+    console.log(`2. Creating test participant record (${testRegId})...`);
+    
+    const newParticipant = await Participant.create({
+      registration_id: testRegId,
+      full_name: 'Verified Test Runner',
+      email: 'verified.testrunner@infinityrun.org',
+      mobile: '+919876543210',
+      dob: '1998-05-20',
+      gender: 'Female',
+      blood_group: 'A+',
+      race_category_id: 2,
+      t_shirt_size: 'L',
+      emergency_name: 'Guardian Test',
+      emergency_mobile: '+919876543211',
+      emergency_relation: 'Parent',
+      medical_info: 'None',
+      registration_status: 'Confirmed',
+      payment_status: 'Paid'
+    });
+    console.log('✓ Test participant inserted cleanly with ID:', newParticipant._id.toString());
 
-    // 3. Perform SELECT from participants table
-    const [participants] = await connection.query('SELECT * FROM participants WHERE registration_id = ?', [testRegId]);
-    console.log('✓ SELECT query from participants table returned:', participants[0].full_name, '| Reg ID:', participants[0].registration_id);
-
-    // 4. Create view alias and perform SELECT from infinity_run view
-    await connection.query('CREATE OR REPLACE VIEW infinity_run AS SELECT * FROM participants');
-    const [viewResults] = await connection.query('SELECT * FROM infinity_run WHERE registration_id = ?', [testRegId]);
-    console.log('✓ SELECT query from infinity_run view returned:', viewResults[0].full_name, '| Reg ID:', viewResults[0].registration_id);
+    // 4. Perform SELECT query
+    console.log('3. Querying inserted participant from MongoDB Atlas...');
+    const foundParticipant = await Participant.findOne({ registration_id: testRegId }).lean();
+    if (!foundParticipant) {
+      throw new Error('Test participant not found after insertion!');
+    }
+    console.log(`✓ Query returned participant: ${foundParticipant.full_name} | Reg ID: ${foundParticipant.registration_id} | Status: ${foundParticipant.registration_status}`);
 
     // 5. Clean up test record
-    await connection.query('DELETE FROM participants WHERE registration_id = ?', [testRegId]);
+    console.log('4. Cleaning up test record from MongoDB Atlas...');
+    await Participant.deleteOne({ registration_id: testRegId });
     console.log('✓ Cleaned up test record.');
 
-    console.log('=== FULL END-TO-END FLOW VERIFIED SUCCESSFULLY ===');
+    // 6. Admin user status check
+    const adminCount = await Admin.countDocuments();
+    console.log(`✓ Admin accounts count in database: ${adminCount}`);
+
+    console.log('=================================================================');
+    console.log('   🎉 MONGODB ATLAS END-TO-END FLOW VERIFIED SUCCESSFULLY');
+    console.log('=================================================================');
+    process.exit(0);
   } catch (err) {
-    console.error('❌ Database Test Error:', err);
+    console.error('❌ MongoDB Atlas Test Error:', err);
     process.exit(1);
-  } finally {
-    if (connection) await connection.end();
   }
 }
 

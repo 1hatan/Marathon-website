@@ -84,16 +84,32 @@ export default function RegisterPage() {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!formData.full_name.trim()) {
-      setErrorMsg('Please enter your full name as per photo ID.');
+    if (!formData.full_name.trim() || formData.full_name.trim().length < 3) {
+      setErrorMsg('Please enter your full name (minimum 3 characters).');
       return;
     }
-    if (!formData.mobile.trim() || formData.mobile.length < 8) {
-      setErrorMsg('Please enter a valid phone number.');
+    const cleanMobile = formData.mobile.replace(/\D/g, '');
+    if (!cleanMobile || cleanMobile.length < 10) {
+      setErrorMsg('Please enter a valid 10-digit mobile number.');
       return;
+    }
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+    if (formData.age && (parseInt(formData.age) < 5 || parseInt(formData.age) > 100)) {
+      setErrorMsg('Please enter a valid age between 5 and 100.');
+      return;
+    }
+    if (formData.emergency_mobile.trim()) {
+      const cleanEmergency = formData.emergency_mobile.replace(/\D/g, '');
+      if (cleanEmergency.length < 10) {
+        setErrorMsg('Please enter a valid 10-digit emergency contact phone number.');
+        return;
+      }
     }
     if (!formData.terms_accepted) {
-      setErrorMsg('You must accept the terms & conditions to proceed.');
+      setErrorMsg('You must accept the terms & conditions to proceed with registration.');
       return;
     }
 

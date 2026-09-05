@@ -13,6 +13,7 @@ import GalleryPage from './pages/GalleryPage';
 import FAQPage from './pages/FAQPage';
 import RegisterPage from './pages/RegisterPage';
 import ContactPage from './pages/ContactPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin';
@@ -80,8 +81,8 @@ export default function App() {
           <Route path="/admin/faq" element={<ProtectedAdminRoute><AdminFAQ /></ProtectedAdminRoute>} />
           <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettings /></ProtectedAdminRoute>} />
 
-          {/* Catch-all redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Catch-all 404 Not Found Page */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
 
