@@ -8,12 +8,12 @@ export default function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState(null);
 
   const defaultGallery = [
-    { id: 1, image_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&auto=format&fit=crop&q=80', title: 'Marathon Flag Off Moment' },
-    { id: 2, image_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&auto=format&fit=crop&q=80', title: 'Runners at Sunrise' },
-    { id: 3, image_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80', title: 'Finisher Line Joy' },
-    { id: 4, image_url: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&auto=format&fit=crop&q=80', title: 'Hydration Station' },
-    { id: 5, image_url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&auto=format&fit=crop&q=80', title: 'Medal Presentation' },
-    { id: 6, image_url: 'https://images.unsplash.com/photo-1517649763962-0c623266010b?w=800&auto=format&fit=crop&q=80', title: 'Community Spirit' }
+    { id: 1, image_url: '/images/running_marathon_city.png', title: 'Salem City Marathon Runners' },
+    { id: 2, image_url: '/images/running_marathon_pro.png', title: 'Elite Lead Marathon Runners' },
+    { id: 3, image_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&auto=format&fit=crop&q=80', title: 'Marathon Runners Pack' },
+    { id: 4, image_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&auto=format&fit=crop&q=80', title: 'Sunrise Road Runners' },
+    { id: 5, image_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80', title: 'Finisher Sprint Challenge' },
+    { id: 6, image_url: 'https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=800&auto=format&fit=crop&q=80', title: 'Community Pace Runners' }
   ];
 
   useEffect(() => {

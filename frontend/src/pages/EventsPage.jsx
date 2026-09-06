@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Award, Medal, Star, ArrowUpRight, ChevronRight, ShieldCheck, Flag, Shirt, FileCheck, Coffee, Droplet } from 'lucide-react';
-import { fetchRaces } from '../services/api';
+import { Trophy, Award, Medal, Star, ArrowUpRight, ChevronRight, ShieldCheck, Calendar, MapPin, Clock } from 'lucide-react';
+import { fetchRaces, fetchSettings } from '../services/api';
 
 export default function EventsPage() {
+  const [settings, setSettings] = useState({
+    event_date: 'Sunday, November 15, 2026',
+    venue: 'Salem Sports Complex',
+    location: 'Salem, Tamil Nadu',
+    reporting_time: '05:00 AM',
+    flagoff_time: '05:30 AM (21K) | 06:00 AM (10K) | 06:30 AM (5K/3K)'
+  });
   const [races, setRaces] = useState([
     { id: 1, name: '3K Fun Run', distance: '3K', fee: 499, description: 'Ideal for beginners, families, and casual runners looking to be part of the movement.', age_limit: 'Open to all ages' },
     { id: 2, name: '5K Run', distance: '5K', fee: 699, description: 'A popular distance for fitness enthusiasts testing their endurance and speed.', age_limit: 'Min. 12 years old' },
@@ -12,17 +19,20 @@ export default function EventsPage() {
   ]);
 
   useEffect(() => {
-    async function loadRacesData() {
+    async function loadEventsData() {
       try {
-        const res = await fetchRaces();
-        if (res && res.success && Array.isArray(res.races) && res.races.length > 0) {
-          setRaces(res.races);
+        const [settingsRes, racesRes] = await Promise.all([fetchSettings(), fetchRaces()]);
+        if (settingsRes && settingsRes.success && settingsRes.settings) {
+          setSettings(settingsRes.settings);
+        }
+        if (racesRes && racesRes.success && Array.isArray(racesRes.races) && racesRes.races.length > 0) {
+          setRaces(racesRes.races);
         }
       } catch (err) {
-        console.error('Failed to load races for events page:', err);
+        console.error('Failed to load data for events page:', err);
       }
     }
-    loadRacesData();
+    loadEventsData();
   }, []);
 
   const prizeCategories = [
@@ -94,6 +104,51 @@ export default function EventsPage() {
           <p className="text-gray-600 text-sm sm:text-base font-medium leading-relaxed">
             Choose your distance challenge. All race entries include an official dry-fit T-shirt, personalized timing bib, finisher medal, breakfast, and medical support.
           </p>
+        </div>
+
+        {/* Event Key Details Cards Grid */}
+        <div className="space-y-6">
+          <h2 className="text-2xl sm:text-3xl font-black text-black uppercase font-outfit border-l-4 border-rock-yellow pl-4">
+            Event Key Details
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* Sky Blue Card */}
+            <div className="bg-rock-cyan text-white rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white/80 block mb-1">Event Date</span>
+                <p className="font-extrabold text-white text-lg font-outfit">{settings.event_date}</p>
+              </div>
+            </div>
+
+            {/* Sunflower Yellow Card */}
+            <div className="bg-rock-yellow text-black border border-amber-300 rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-black/70 block mb-1">Location & Venue</span>
+                <p className="font-extrabold text-black text-lg font-outfit">{settings.venue}</p>
+                <p className="text-xs text-black/80 font-bold mt-0.5">{settings.location}</p>
+              </div>
+            </div>
+
+            {/* Bold Black Card */}
+            <div className="bg-black text-white rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-rock-yellow text-black flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-1">Reporting Time</span>
+                <p className="font-extrabold text-rock-yellow text-lg font-outfit">{settings.reporting_time}</p>
+                <p className="text-xs text-gray-300 font-semibold mt-0.5">Flag-off: {settings.flagoff_time}</p>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         {/* 1. Race Categories Overview Cards Grid */}

@@ -199,6 +199,20 @@ async function initializeDatabase() {
       });
       console.log('[MongoDB Atlas] Seeded default event settings.');
     }
+
+    // 4. Seed default gallery items if empty
+    const galleryCount = await GalleryItem.countDocuments();
+    if (galleryCount === 0) {
+      await GalleryItem.insertMany([
+        { id: 1, title: 'Salem City Marathon Runners', image_url: '/images/running_marathon_city.png', category: 'Runners', status: 'active' },
+        { id: 2, title: 'Elite Lead Marathon Runners', image_url: '/images/running_marathon_pro.png', category: 'Runners', status: 'active' },
+        { id: 3, title: 'Marathon Runners Pack', image_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&auto=format&fit=crop&q=80', category: 'Runners', status: 'active' },
+        { id: 4, title: 'Sunrise Road Runners', image_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&auto=format&fit=crop&q=80', category: 'Runners', status: 'active' },
+        { id: 5, title: 'Finisher Sprint Challenge', image_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80', category: 'Runners', status: 'active' },
+        { id: 6, title: 'Community Pace Runners', image_url: 'https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=800&auto=format&fit=crop&q=80', category: 'Runners', status: 'active' }
+      ]);
+      console.log('[MongoDB Atlas] Seeded default running gallery items.');
+    }
   } catch (err) {
     console.error('[MongoDB Atlas] Database seed warning:', err.message);
   }
