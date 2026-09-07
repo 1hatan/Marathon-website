@@ -260,7 +260,9 @@ export default function RegisterPage() {
       console.error('Registration submission error:', err);
       const apiErr = err.response?.data?.message
         || err.response?.data?.error
-        || (err.code === 'ERR_NETWORK' ? 'Unable to connect to payment server. Please check your network connection.' : err.message || 'Registration submission failed.');
+        || (err.code === 'ERR_NETWORK' || err.response?.status === 500
+            ? 'Unable to connect to payment server. Please ensure the backend server is running on port 5050.'
+            : err.message || 'Registration submission failed.');
       setErrorMsg(apiErr);
       setSubmitting(false);
     }
