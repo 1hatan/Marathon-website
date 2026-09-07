@@ -8,10 +8,14 @@ import {
   MapPin,
   Activity,
   Sparkles,
-  Zap
+  Zap,
+  CheckCircle2,
+  Trophy,
+  HeartHandshake
 } from 'lucide-react';
 import { fetchSettings, fetchRaces } from '../services/api';
 import LogoLoop from '../components/LogoLoop';
+import AnimatedList, { AnimatedItem } from '../components/AnimatedList';
 
 export default function HomePage() {
   const [settings, setSettings] = useState({
@@ -49,6 +53,15 @@ export default function HomePage() {
     }
     loadHomeData();
   }, []);
+
+  const eventPerksList = [
+    '🏆 Official Finisher Medal & Digital Performance Certificate',
+    '👕 Premium Dry-Fit Infinity Run Marathon Runner T-Shirt',
+    '⏱️ RFID Chip-Timed Bib Tracked Real-time Leaderboard System',
+    '🍎 On-Course Hydration, Energy Gels, & Post-Race Breakfast',
+    '🚑 Dedicated 24/7 Medical Stations, Ambulances, & Pace Groups',
+    '📸 Professional Photographer Shots & Live Photo Stream Access'
+  ];
 
   return (
     <div className="w-full bg-white text-black font-sans antialiased overflow-x-hidden">
@@ -162,7 +175,7 @@ export default function HomePage() {
 
       </section>
 
-      {/* 2. RACE CATEGORIES SUMMARY SECTION */}
+      {/* 2. RACE CATEGORIES SUMMARY SECTION WITH SCROLL ANIMATED ITEMS */}
       <section className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -178,49 +191,91 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {races.map((race) => (
-            <div 
-              key={race.id} 
-              className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 rounded-full bg-black text-white text-xs font-black uppercase font-outfit shadow-sm">
-                    {race.distance}
-                  </span>
-                  <span className="text-2xl font-black text-black font-outfit">
-                    ₹{race.fee}
-                  </span>
+          {races.map((race, index) => (
+            <AnimatedItem key={race.id || index} index={index} delay={index * 0.08}>
+              <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group h-full">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="px-3 py-1 rounded-full bg-black text-white text-xs font-black uppercase font-outfit shadow-sm">
+                      {race.distance}
+                    </span>
+                    <span className="text-2xl font-black text-black font-outfit">
+                      ₹{race.fee}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-black text-black font-outfit uppercase mb-2 group-hover:text-rock-cyan transition-colors">
+                    {race.name}
+                  </h3>
+
+                  <p className="text-xs text-gray-600 leading-relaxed mb-4">
+                    {race.description}
+                  </p>
+
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-[11px] font-bold text-gray-700 mb-6">
+                    <ShieldCheck className="w-3.5 h-3.5 text-rock-cyan" />
+                    <span>{race.age_limit || 'Open Entry'}</span>
+                  </div>
                 </div>
 
-                <h3 className="text-xl font-black text-black font-outfit uppercase mb-2 group-hover:text-rock-cyan transition-colors">
-                  {race.name}
-                </h3>
-
-                <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                  {race.description}
-                </p>
-
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-[11px] font-bold text-gray-700 mb-6">
-                  <ShieldCheck className="w-3.5 h-3.5 text-rock-cyan" />
-                  <span>{race.age_limit || 'Open Entry'}</span>
-                </div>
+                <Link
+                  to={`/register?category=${race.id}`}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold text-xs py-3 px-4 rounded-xl transition-all shadow-sm group-hover:shadow-md uppercase font-outfit"
+                >
+                  <span>REGISTER NOW</span>
+                  <ChevronRight className="w-4 h-4 stroke-[3] transition-transform group-hover:translate-x-1" />
+                </Link>
               </div>
-
-              <Link
-                to="/register"
-                className="w-full inline-flex items-center justify-center gap-2 bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold text-xs py-3 px-4 rounded-xl transition-all shadow-sm group-hover:shadow-md uppercase font-outfit"
-              >
-                <span>REGISTER NOW</span>
-                <ChevronRight className="w-4 h-4 stroke-[3] transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
+            </AnimatedItem>
           ))}
         </div>
 
       </section>
 
+      {/* 3. REACTBITS ANIMATED LIST FEATURE SECTION */}
+      <section className="bg-white py-16 border-t border-gray-100">
+        <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Left Content */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rock-yellow/20 text-black text-xs font-black tracking-widest uppercase font-outfit">
+                <Sparkles className="w-4 h-4 text-black" />
+                <span>EXCLUSIVES & INCLUSIONS</span>
+              </div>
+              
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-black uppercase font-outfit tracking-tight leading-tight">
+                Everything You Get With <span className="text-rock-yellow">Infinity Run</span>
+              </h2>
 
+              <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                Scroll through the animated feature list below or use your keyboard arrow keys to explore all runner amenities included in your registration pass.
+              </p>
+
+              <div className="pt-2 flex items-center gap-4">
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center gap-2 bg-black text-white hover:bg-rock-yellow hover:text-black font-black px-7 py-3.5 rounded-full text-xs uppercase font-outfit tracking-wider transition-all shadow-lg"
+                >
+                  <span>SECURE YOUR SPOT</span>
+                  <ArrowUpRight className="w-4 h-4 stroke-[3]" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Right AnimatedList Component from ReactBits */}
+            <div className="lg:col-span-7 bg-gray-50/80 p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-inner">
+              <AnimatedList
+                items={eventPerksList}
+                displayScrollbar={false}
+                showGradients={true}
+                enableArrowNavigation={true}
+              />
+            </div>
+
+          </div>
+        </div>
+      </section>
 
       {/* 4. REACTBITS LOGOLOOP HORIZONTAL PHOTO MARQUEE SECTION */}
       <section className="bg-gray-50/80 py-16 border-t border-gray-100 overflow-hidden">
@@ -270,3 +325,4 @@ export default function HomePage() {
     </div>
   );
 }
+
