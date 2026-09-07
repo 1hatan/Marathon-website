@@ -7,6 +7,7 @@ import {
   Coffee,
   Droplet
 } from 'lucide-react';
+import { AnimatedItem } from '../components/AnimatedList';
 
 export default function AboutPage() {
   const benefits = [
@@ -36,17 +37,19 @@ export default function AboutPage() {
         </div>
 
         {/* 1. About Infinity Run Card */}
-        <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-10 shadow-sm transition-all space-y-4">
-          <div className="inline-block px-3 py-1 bg-black text-white text-xs font-black uppercase font-outfit rounded-full">
-            Event Motto
+        <AnimatedItem index={0} delay={0.05}>
+          <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-10 shadow-sm transition-all space-y-4">
+            <div className="inline-block px-3 py-1 bg-black text-white text-xs font-black uppercase font-outfit rounded-full">
+              Event Motto
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-black uppercase font-outfit">
+              About Infinity Run
+            </h2>
+            <p className="text-gray-600 leading-relaxed text-sm sm:text-base font-medium">
+              Infinity Run is an annual flagship marathon organized to promote health, wellness, and community solidarity. Driven by the motto <strong className="text-black font-extrabold font-outfit">“Every Step Creates a Better Tomorrow,”</strong> the event brings together beginner runners, fitness enthusiasts, and elite athletes on a clean, safe, and beautifully mapped city course in Salem, Tamil Nadu.
+            </p>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-black uppercase font-outfit">
-            About Infinity Run
-          </h2>
-          <p className="text-gray-600 leading-relaxed text-sm sm:text-base font-medium">
-            Infinity Run is an annual flagship marathon organized to promote health, wellness, and community solidarity. Driven by the motto <strong className="text-black font-extrabold font-outfit">“Every Step Creates a Better Tomorrow,”</strong> the event brings together beginner runners, fitness enthusiasts, and elite athletes on a clean, safe, and beautifully mapped city course in Salem, Tamil Nadu.
-          </p>
-        </div>
+        </AnimatedItem>
 
         {/* 2. Runner Entitlements & Benefits Grid */}
         <div className="space-y-6">
@@ -57,20 +60,22 @@ export default function AboutPage() {
             {benefits.map((b, idx) => {
               const IconComp = b.icon;
               return (
-                <div key={idx} className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-3 group">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-2xl bg-gray-100 text-black flex items-center justify-center group-hover:bg-rock-yellow group-hover:text-black transition-colors">
-                      <IconComp className="w-5 h-5" />
+                <AnimatedItem key={idx} index={idx} delay={idx * 0.08}>
+                  <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-3 group h-full">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-2xl bg-gray-100 text-black flex items-center justify-center group-hover:bg-rock-yellow group-hover:text-black transition-colors">
+                        <IconComp className="w-5 h-5" />
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-outfit ${b.badgeColor}`}>
+                        Included
+                      </span>
                     </div>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase font-outfit ${b.badgeColor}`}>
-                      Included
-                    </span>
+                    <h3 className="text-lg font-black text-black font-outfit uppercase group-hover:text-rock-cyan transition-colors">
+                      {b.name}
+                    </h3>
+                    <p className="text-xs text-gray-600 font-medium leading-relaxed">{b.desc}</p>
                   </div>
-                  <h3 className="text-lg font-black text-black font-outfit uppercase group-hover:text-rock-cyan transition-colors">
-                    {b.name}
-                  </h3>
-                  <p className="text-xs text-gray-600 font-medium leading-relaxed">{b.desc}</p>
-                </div>
+                </AnimatedItem>
               );
             })}
           </div>

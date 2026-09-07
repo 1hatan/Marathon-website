@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trophy, Award, Medal, Star, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AnimatedItem } from '../components/AnimatedList';
 
 export default function PrizesPage() {
   const prizeCategories = [
@@ -76,55 +77,57 @@ export default function PrizesPage() {
 
         {/* Prize Category Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {prizeCategories.map((cat) => {
+          {prizeCategories.map((cat, index) => {
             const Icon = cat.icon;
             return (
-              <div key={cat.race} className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all space-y-6 flex flex-col justify-between group">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-black uppercase font-outfit inline-block mb-1 ${cat.badgeColor}`}>
-                        {cat.badge}
-                      </span>
-                      <h3 className="text-2xl font-black text-black font-outfit uppercase group-hover:text-rock-cyan transition-colors">
-                        {cat.race}
-                      </h3>
-                      <p className={`text-xs font-black uppercase tracking-wider mt-0.5 ${cat.purseColor}`}>{cat.purse}</p>
+              <AnimatedItem key={cat.race} index={index} delay={index * 0.1}>
+                <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all space-y-6 flex flex-col justify-between group h-full">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-black uppercase font-outfit inline-block mb-1 ${cat.badgeColor}`}>
+                          {cat.badge}
+                        </span>
+                        <h3 className="text-2xl font-black text-black font-outfit uppercase group-hover:text-rock-cyan transition-colors">
+                          {cat.race}
+                        </h3>
+                        <p className={`text-xs font-black uppercase tracking-wider mt-0.5 ${cat.purseColor}`}>{cat.purse}</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-2xl bg-rock-yellow/20 text-black flex items-center justify-center shrink-0">
+                        <Icon className="w-6 h-6" />
+                      </div>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl bg-rock-yellow/20 text-black flex items-center justify-center shrink-0">
-                      <Icon className="w-6 h-6" />
-                    </div>
-                  </div>
 
-                  <div className="divide-y divide-gray-100 border-t border-b border-gray-100 py-2">
-                    {cat.prizes.map((p, idx) => (
-                      <div key={idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
-                        <span className="font-black font-outfit text-black uppercase w-32">{p.place}</span>
-                        <div className="flex-1 grid grid-cols-2 gap-4 text-xs">
-                          <div>
-                            <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Men's</span>
-                            <span className="font-bold text-gray-900">{p.mens}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Women's</span>
-                            <span className="font-bold text-gray-900">{p.womens}</span>
+                    <div className="divide-y divide-gray-100 border-t border-b border-gray-100 py-2">
+                      {cat.prizes.map((p, idx) => (
+                        <div key={idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
+                          <span className="font-black font-outfit text-black uppercase w-32">{p.place}</span>
+                          <div className="flex-1 grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                              <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Men's</span>
+                              <span className="font-bold text-gray-900">{p.mens}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Women's</span>
+                              <span className="font-bold text-gray-900">{p.womens}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Link
+                      to="/register"
+                      className="w-full bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold py-3.5 px-4 rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase font-outfit"
+                    >
+                      <span>Compete in {cat.race}</span>
+                      <ArrowUpRight className="w-4 h-4 stroke-[3]" />
+                    </Link>
                   </div>
                 </div>
-
-                <div className="pt-2">
-                  <Link
-                    to="/register"
-                    className="w-full bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold py-3.5 px-4 rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5"
-                  >
-                    <span>Compete in {cat.race}</span>
-                    <ArrowUpRight className="w-4 h-4 stroke-[3]" />
-                  </Link>
-                </div>
-              </div>
+              </AnimatedItem>
             );
           })}
         </div>

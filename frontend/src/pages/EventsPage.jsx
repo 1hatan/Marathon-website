@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Award, Medal, Star, ArrowUpRight, ChevronRight, ShieldCheck, Calendar, MapPin, Clock } from 'lucide-react';
 import { fetchRaces, fetchSettings } from '../services/api';
+import { AnimatedItem } from '../components/AnimatedList';
 
 export default function EventsPage() {
   const [settings, setSettings] = useState({
@@ -114,39 +115,45 @@ export default function EventsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* Sky Blue Card */}
-            <div className="bg-rock-cyan text-white rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-                <Calendar className="w-6 h-6" />
+            <AnimatedItem index={0} delay={0.05}>
+              <div className="bg-rock-cyan text-white rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all h-full">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-white/80 block mb-1">Event Date</span>
+                  <p className="font-extrabold text-white text-lg font-outfit">{settings.event_date}</p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white/80 block mb-1">Event Date</span>
-                <p className="font-extrabold text-white text-lg font-outfit">{settings.event_date}</p>
-              </div>
-            </div>
+            </AnimatedItem>
 
             {/* Sunflower Yellow Card */}
-            <div className="bg-rock-yellow text-black border border-amber-300 rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
-                <MapPin className="w-6 h-6" />
+            <AnimatedItem index={1} delay={0.1}>
+              <div className="bg-rock-yellow text-black border border-amber-300 rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all h-full">
+                <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-black/70 block mb-1">Location & Venue</span>
+                  <p className="font-extrabold text-black text-lg font-outfit">{settings.venue}</p>
+                  <p className="text-xs text-black/80 font-bold mt-0.5">{settings.location}</p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-black/70 block mb-1">Location & Venue</span>
-                <p className="font-extrabold text-black text-lg font-outfit">{settings.venue}</p>
-                <p className="text-xs text-black/80 font-bold mt-0.5">{settings.location}</p>
-              </div>
-            </div>
+            </AnimatedItem>
 
             {/* Bold Black Card */}
-            <div className="bg-black text-white rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-rock-yellow text-black flex items-center justify-center shrink-0">
-                <Clock className="w-6 h-6" />
+            <AnimatedItem index={2} delay={0.15}>
+              <div className="bg-black text-white rounded-3xl p-6 shadow-sm flex items-start gap-4 hover:shadow-md transition-all h-full">
+                <div className="w-12 h-12 rounded-2xl bg-rock-yellow text-black flex items-center justify-center shrink-0">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-1">Reporting Time</span>
+                  <p className="font-extrabold text-rock-yellow text-lg font-outfit">{settings.reporting_time}</p>
+                  <p className="text-xs text-gray-300 font-semibold mt-0.5">Flag-off: {settings.flagoff_time}</p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-1">Reporting Time</span>
-                <p className="font-extrabold text-rock-yellow text-lg font-outfit">{settings.reporting_time}</p>
-                <p className="text-xs text-gray-300 font-semibold mt-0.5">Flag-off: {settings.flagoff_time}</p>
-              </div>
-            </div>
+            </AnimatedItem>
 
           </div>
         </div>
@@ -157,43 +164,42 @@ export default function EventsPage() {
             Race Distance Categories
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {races.map((race) => (
-              <div 
-                key={race.id} 
-                className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="px-3 py-1 rounded-full bg-black text-white text-xs font-black uppercase font-outfit shadow-sm">
-                      {race.distance}
-                    </span>
-                    <span className="text-2xl font-black text-black font-outfit">
-                      ₹{race.fee}
-                    </span>
+            {races.map((race, index) => (
+              <AnimatedItem key={race.id || index} index={index} delay={index * 0.08}>
+                <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group h-full">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="px-3 py-1 rounded-full bg-black text-white text-xs font-black uppercase font-outfit shadow-sm">
+                        {race.distance}
+                      </span>
+                      <span className="text-2xl font-black text-black font-outfit">
+                        ₹{race.fee}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-black text-black font-outfit uppercase mb-2 group-hover:text-rock-cyan transition-colors">
+                      {race.name}
+                    </h3>
+
+                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
+                      {race.description}
+                    </p>
+
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-[11px] font-bold text-gray-700 mb-6">
+                      <ShieldCheck className="w-3.5 h-3.5 text-rock-cyan" />
+                      <span>{race.age_limit || 'Open Entry'}</span>
+                    </div>
                   </div>
 
-                  <h3 className="text-xl font-black text-black font-outfit uppercase mb-2 group-hover:text-rock-cyan transition-colors">
-                    {race.name}
-                  </h3>
-
-                  <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                    {race.description}
-                  </p>
-
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-[11px] font-bold text-gray-700 mb-6">
-                    <ShieldCheck className="w-3.5 h-3.5 text-rock-cyan" />
-                    <span>{race.age_limit || 'Open Entry'}</span>
-                  </div>
+                  <Link
+                    to={`/register?category=${race.id}`}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold text-xs py-3 px-4 rounded-xl transition-all shadow-sm group-hover:shadow-md font-outfit uppercase"
+                  >
+                    <span>REGISTER NOW</span>
+                    <ChevronRight className="w-4 h-4 stroke-[3] transition-transform group-hover:translate-x-1" />
+                  </Link>
                 </div>
-
-                <Link
-                  to="/register"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold text-xs py-3 px-4 rounded-xl transition-all shadow-sm group-hover:shadow-md"
-                >
-                  <span>REGISTER NOW</span>
-                  <ChevronRight className="w-4 h-4 stroke-[3] transition-transform group-hover:translate-x-1" />
-                </Link>
-              </div>
+              </AnimatedItem>
             ))}
           </div>
         </div>
@@ -204,55 +210,57 @@ export default function EventsPage() {
             Prize Purses & Awards
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {prizeCategories.map((cat) => {
+            {prizeCategories.map((cat, index) => {
               const Icon = cat.icon;
               return (
-                <div key={cat.race} className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all space-y-6 flex flex-col justify-between group">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-black uppercase font-outfit inline-block mb-1 ${cat.badgeColor}`}>
-                          {cat.badge}
-                        </span>
-                        <h3 className="text-2xl font-black text-black font-outfit uppercase group-hover:text-rock-cyan transition-colors">
-                          {cat.race}
-                        </h3>
-                        <p className={`text-xs font-black uppercase tracking-wider mt-0.5 ${cat.purseColor}`}>{cat.purse}</p>
+                <AnimatedItem key={cat.race} index={index} delay={index * 0.1}>
+                  <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all space-y-6 flex flex-col justify-between group h-full">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-black uppercase font-outfit inline-block mb-1 ${cat.badgeColor}`}>
+                            {cat.badge}
+                          </span>
+                          <h3 className="text-2xl font-black text-black font-outfit uppercase group-hover:text-rock-cyan transition-colors">
+                            {cat.race}
+                          </h3>
+                          <p className={`text-xs font-black uppercase tracking-wider mt-0.5 ${cat.purseColor}`}>{cat.purse}</p>
+                        </div>
+                        <div className="w-12 h-12 rounded-2xl bg-rock-yellow/20 text-black flex items-center justify-center shrink-0">
+                          <Icon className="w-6 h-6" />
+                        </div>
                       </div>
-                      <div className="w-12 h-12 rounded-2xl bg-rock-yellow/20 text-black flex items-center justify-center shrink-0">
-                        <Icon className="w-6 h-6" />
-                      </div>
-                    </div>
 
-                    <div className="divide-y divide-gray-100 border-t border-b border-gray-100 py-2">
-                      {cat.prizes.map((p, idx) => (
-                        <div key={idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
-                          <span className="font-black font-outfit text-black uppercase w-32">{p.place}</span>
-                          <div className="flex-1 grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                              <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Men's</span>
-                              <span className="font-bold text-gray-900">{p.mens}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Women's</span>
-                              <span className="font-bold text-gray-900">{p.womens}</span>
+                      <div className="divide-y divide-gray-100 border-t border-b border-gray-100 py-2">
+                        {cat.prizes.map((p, idx) => (
+                          <div key={idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
+                            <span className="font-black font-outfit text-black uppercase w-32">{p.place}</span>
+                            <div className="flex-1 grid grid-cols-2 gap-4 text-xs">
+                              <div>
+                                <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Men's</span>
+                                <span className="font-bold text-gray-900">{p.mens}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-400 text-[10px] font-extrabold uppercase block">Women's</span>
+                                <span className="font-bold text-gray-900">{p.womens}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <Link
+                        to="/register"
+                        className="w-full bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold py-3.5 px-4 rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 uppercase font-outfit"
+                      >
+                        <span>Compete in {cat.race}</span>
+                        <ArrowUpRight className="w-4 h-4 stroke-[3]" />
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="pt-2">
-                    <Link
-                      to="/register"
-                      className="w-full bg-rock-yellow hover:bg-black hover:text-white text-black font-extrabold py-3.5 px-4 rounded-2xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5"
-                    >
-                      <span>Compete in {cat.race}</span>
-                      <ArrowUpRight className="w-4 h-4 stroke-[3]" />
-                    </Link>
-                  </div>
-                </div>
+                </AnimatedItem>
               );
             })}
           </div>
