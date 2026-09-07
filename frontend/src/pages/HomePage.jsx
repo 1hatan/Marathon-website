@@ -11,6 +11,7 @@ import {
   Zap
 } from 'lucide-react';
 import { fetchSettings, fetchRaces } from '../services/api';
+import LogoLoop from '../components/LogoLoop';
 
 export default function HomePage() {
   const [settings, setSettings] = useState({
@@ -219,80 +220,49 @@ export default function HomePage() {
 
       </section>
 
-      {/* 3. INFINITY RUN BRANDING & RUNNING ATHLETE FEATURE SECTION */}
-      <section className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+
+
+      {/* 4. REACTBITS LOGOLOOP HORIZONTAL PHOTO MARQUEE SECTION */}
+      <section className="bg-gray-50/80 py-16 border-t border-gray-100 overflow-hidden">
+        <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           
-          <div className="lg:col-span-8 space-y-8 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="space-y-1 font-outfit">
-                <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-none text-black uppercase">
-                  Infinity <span className="text-stroke-light text-gray-300 font-extrabold">Run</span>
-                </h2>
-                <h3 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-rock-yellow uppercase leading-none">
-                  Salem Tamil Nadu 2026
-                </h3>
-              </div>
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-2xl font-normal pt-2">
-                Historic heritage, scenic Yercaud foothills, vibrant culture, true local flavor – Salem, Tamil Nadu is a place unlike any other. Join thousands of runners creating an unforgettable experience with Infinity Run. Every step creates a better tomorrow.
-              </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-1">
+              <span className="text-xs font-black tracking-widest text-rock-cyan uppercase block mb-1 font-outfit">
+                Continuous Photo Stream
+              </span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-black uppercase font-outfit tracking-tight">
+                Race Day <span className="text-rock-yellow">Highlights</span>
+              </h2>
             </div>
-
-            <div className="space-y-6">
-              <div className="pt-4 border-t border-gray-100">
-                <span className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase block mb-4">Official Partners</span>
-                <div className="flex flex-wrap items-center gap-8 text-xs font-black text-gray-800 tracking-wider">
-                  <span className="flex items-center gap-1.5 text-black font-extrabold font-outfit text-sm">
-                    <span className="w-2.5 h-2.5 bg-black rotate-45 inline-block" /> ALWAYS ADVANCING
-                  </span>
-                  <span className="text-red-600 font-black text-sm tracking-tight">
-                    Finisher<span className="text-black">Pix</span>
-                  </span>
-                  <span className="lowercase font-bold text-base tracking-tighter text-black">
-                    lululemon
-                  </span>
-                  <span className="font-black text-sm tracking-widest uppercase text-black">
-                    SUUNTO
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <div className="h-6 w-full bg-hazard-stripes rounded-md shadow-sm transform -skew-x-12" />
-              </div>
-            </div>
+            <Link
+              to="/gallery"
+              className="inline-flex items-center gap-2 bg-black text-white hover:bg-rock-yellow hover:text-black font-black px-6 py-3 rounded-2xl text-xs uppercase font-outfit tracking-wider transition-all shadow-md"
+            >
+              <span>EXPLORE FULL GALLERY</span>
+              <ArrowUpRight className="w-4 h-4 stroke-[3]" />
+            </Link>
           </div>
 
-          <div className="lg:col-span-4 bg-gray-900 rounded-3xl overflow-hidden relative min-h-[380px] flex flex-col justify-end p-6 group shadow-lg border-2 border-gray-100 hover:border-black transition-all">
-            <img 
-              src="https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&auto=format&fit=crop&q=80" 
-              alt="Infinity Run City Marathon Race" 
-              className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-90"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-            
-            <div className="relative z-10 space-y-3 text-white">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-rock-yellow text-black rounded-full text-xs font-black uppercase font-outfit shadow">
-                <span>Infinity Run 2026</span>
-              </div>
-              
-              <h3 className="text-xl sm:text-2xl font-black font-outfit uppercase tracking-tight text-white leading-tight">
-                Unleash Your <span className="text-rock-yellow">Potential</span>
-              </h3>
-              
-              <p className="text-xs text-gray-200 font-medium leading-relaxed">
-                Experience Salem's premier marathon event with chip timing, scenic routes & vibrant community spirit.
-              </p>
-
-              <Link
-                to="/register"
-                className="w-full inline-flex items-center justify-between bg-rock-cyan hover:bg-sky-500 text-white font-black px-5 py-3.5 rounded-2xl text-xs uppercase font-outfit tracking-wider transition-all shadow-md group-hover:shadow-lg"
-              >
-                <span>REGISTER FOR RACE</span>
-                <ArrowUpRight className="w-4 h-4 stroke-[3]" />
-              </Link>
-            </div>
-          </div>
+          <LogoLoop
+            logos={[
+              { id: 1, image_url: '/images/running_marathon_city.png', title: 'Salem City Marathon' },
+              { id: 2, image_url: '/images/running_marathon_pro.png', title: 'Elite Lead Runners' },
+              { id: 3, image_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800&auto=format&fit=crop&q=80', title: 'Marathon Pack' },
+              { id: 4, image_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&auto=format&fit=crop&q=80', title: 'Sunrise Road Runners' },
+              { id: 5, image_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80', title: 'Finisher Challenge' },
+              { id: 6, image_url: 'https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=800&auto=format&fit=crop&q=80', title: 'Community Pace' }
+            ]}
+            speed={100}
+            direction="left"
+            logoHeight={220}
+            gap={24}
+            hoverSpeed={0}
+            scaleOnHover={true}
+            fadeOut={true}
+            fadeOutColor="#f9fafb"
+            onImageClick={() => window.location.href = '/gallery'}
+          />
 
         </div>
       </section>

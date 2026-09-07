@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { fetchRaces, submitRegistration } from '../services/api';
+import { fetchRaces, createPaymentOrder, verifyPayment } from '../services/api';
 import {
   User,
   ShieldCheck,
@@ -9,7 +9,8 @@ import {
   Printer,
   ArrowRight,
   ArrowUpRight,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-react';
 
 const DEFAULT_RACES = [
@@ -18,6 +19,20 @@ const DEFAULT_RACES = [
   { id: 3, name: '10K Challenge', distance: '10K', fee: 899, age_limit: 'Min. 15 years old' },
   { id: 4, name: '21K Half Marathon', distance: '21K', fee: 1199, age_limit: 'Min. 18 years old' }
 ];
+
+const loadRazorpaySDK = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
@@ -67,6 +82,8 @@ export default function RegisterPage() {
       }
     }
     loadRacesData();
+    // Pre-load Razorpay SDK script for instant checkout
+    loadRazorpaySDK();
   }, [searchParams]);
 
   const handleChange = (e) => {
@@ -135,29 +152,116 @@ export default function RegisterPage() {
         medical_info: formData.medical_info ? formData.medical_info.trim() : null
       };
 
-      const res = await submitRegistration(payload);
-      if (res && res.success) {
-        const p = res.participant || {};
-        setRegistrationPass({
-          registration_id: res.registration_id || p.registration_id || 'INF-2026-CONFIRMED',
-          full_name: payload.full_name,
-          race_name: selectedRace.name,
-          race_distance: selectedRace.distance,
-          t_shirt_size: payload.t_shirt_size,
-          mobile: payload.mobile,
-          blood_group: payload.blood_group,
-          registration_status: 'Confirmed'
-        });
-      } else {
-        setErrorMsg(res?.message || 'Registration failed. Please try again.');
+      // Step 1: Create Razorpay Payment Order via backend
+      const orderRes = await createPaymentOrder(payload.race_category_id);
+      if (!orderRes || !orderRes.success) {
+        setErrorMsg(orderRes?.message || 'Failed to initiate payment. Please try again.');
+        setSubmitting(false);
+        return;
       }
+
+      // Step 2: Handle Demo/Mock Mode or Script loading fallback
+      const sdkLoaded = await loadRazorpaySDK();
+
+      if (orderRes.is_mock || !sdkLoaded || !window.Razorpay) {
+        console.log('[Razorpay Checkout] Processing in mock payment mode...');
+        const verifyRes = await verifyPayment({
+          razorpay_order_id: orderRes.order_id,
+          razorpay_payment_id: `pay_mock_${Date.now()}`,
+          razorpay_signature: 'mock_signature',
+          participantData: payload
+        });
+
+        if (verifyRes && verifyRes.success) {
+          const p = verifyRes.participant || {};
+          setRegistrationPass({
+            registration_id: verifyRes.registration_id || p.registration_id || 'INF-2026-CONFIRMED',
+            full_name: payload.full_name,
+            race_name: selectedRace.name,
+            race_distance: selectedRace.distance,
+            t_shirt_size: payload.t_shirt_size,
+            mobile: payload.mobile,
+            blood_group: payload.blood_group,
+            registration_status: 'Confirmed',
+            payment_status: 'Paid',
+            payment_id: p.razorpay_payment_id || `pay_mock_${Date.now()}`
+          });
+        } else {
+          setErrorMsg(verifyRes?.message || 'Registration failed after payment verification.');
+        }
+        setSubmitting(false);
+        return;
+      }
+
+      // Step 3: Open Razorpay Live / Test Checkout Modal
+      const options = {
+        key: orderRes.key_id,
+        amount: orderRes.amount,
+        currency: orderRes.currency || 'INR',
+        name: 'Infinity Run 2026',
+        description: `${selectedRace.name} (${selectedRace.distance}) Entry Fee`,
+        order_id: orderRes.order_id,
+        prefill: {
+          name: payload.full_name,
+          email: payload.email,
+          contact: payload.mobile
+        },
+        theme: {
+          color: '#FACC15'
+        },
+        handler: async function (response) {
+          try {
+            const verifyRes = await verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              participantData: payload
+            });
+
+            if (verifyRes && verifyRes.success) {
+              const p = verifyRes.participant || {};
+              setRegistrationPass({
+                registration_id: verifyRes.registration_id || p.registration_id || 'INF-2026-CONFIRMED',
+                full_name: payload.full_name,
+                race_name: selectedRace.name,
+                race_distance: selectedRace.distance,
+                t_shirt_size: payload.t_shirt_size,
+                mobile: payload.mobile,
+                blood_group: payload.blood_group,
+                registration_status: 'Confirmed',
+                payment_status: 'Paid',
+                payment_id: response.razorpay_payment_id
+              });
+            } else {
+              setErrorMsg(verifyRes?.message || 'Payment verification failed. Please contact support.');
+            }
+          } catch (err) {
+            console.error('Payment verification error:', err);
+            setErrorMsg(err.response?.data?.message || 'Payment verification error.');
+          } finally {
+            setSubmitting(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setSubmitting(false);
+            setErrorMsg('Payment cancelled. Please try again to complete your registration.');
+          }
+        }
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on('payment.failed', function (response) {
+        setSubmitting(false);
+        setErrorMsg(`Payment failed: ${response.error?.description || 'Transaction declined.'}`);
+      });
+      razorpayInstance.open();
     } catch (err) {
       console.error('Registration submission error:', err);
       const apiErr = err.response?.data?.message
         || err.response?.data?.error
-        || (err.code === 'ERR_NETWORK' ? 'Unable to connect to registration server. Please check your internet connection or backend configuration.' : err.message || 'Registration submission failed.');
+        || (err.code === 'ERR_NETWORK' ? 'Unable to connect to payment server. Please check your network connection.' : err.message || 'Registration submission failed.');
       setErrorMsg(apiErr);
-    } finally {
       setSubmitting(false);
     }
   };
@@ -465,7 +569,8 @@ export default function RegisterPage() {
                   disabled={submitting}
                   className="w-full bg-rock-yellow hover:bg-black hover:text-white text-black font-black py-4 px-6 rounded-2xl text-base shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
                 >
-                  <span>{submitting ? 'Processing Registration...' : 'Complete Registration'}</span>
+                  <CreditCard className="w-5 h-5 shrink-0" />
+                  <span>{submitting ? 'Initiating Secure Payment...' : `Pay ₹${selectedRace.fee || 499} & Register`}</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>

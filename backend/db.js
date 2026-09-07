@@ -66,6 +66,9 @@ const participantSchema = new mongoose.Schema({
   medical_info: { type: String },
   registration_status: { type: String, default: 'Confirmed' },
   payment_status: { type: String, default: 'Paid' },
+  razorpay_order_id: { type: String },
+  razorpay_payment_id: { type: String },
+  razorpay_signature: { type: String },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now }
 });

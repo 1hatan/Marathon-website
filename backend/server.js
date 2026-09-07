@@ -15,6 +15,7 @@ const faqRoutes = require('./routes/faqRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use('/api/faq', faqRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Serve frontend static production build files for unified Render deployment
 const fs = require('fs');

@@ -1,0 +1,84 @@
+/* LogoLoop / PhotoLoop Infinite Horizontal Marquee Styles */
+.logoloop-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  user-select: none;
+}
+
+.logoloop-track-wrapper {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.logoloop-track-wrapper.direction-left {
+  animation: logoloop-scroll-left var(--loop-duration, 30s) linear infinite;
+}
+
+.logoloop-track-wrapper.direction-right {
+  animation: logoloop-scroll-right var(--loop-duration, 30s) linear infinite;
+}
+
+.logoloop-container:hover .logoloop-track-wrapper.pause-on-hover {
+  animation-play-state: paused;
+}
+
+.logoloop-list {
+  display: flex;
+  align-items: center;
+  gap: var(--loop-gap, 24px);
+  padding: 10px 0;
+}
+
+.logoloop-item {
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.logoloop-item.scale-on-hover:hover {
+  transform: scale(1.06) translateY(-4px);
+  z-index: 10;
+}
+
+@keyframes logoloop-scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes logoloop-scroll-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+/* Gradient Fade Mask Out Left & Right Edges */
+.logoloop-fade-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 20;
+  pointer-events: none;
+  background: linear-gradient(to right, var(--fade-color, #ffffff), transparent);
+}
+
+.logoloop-fade-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 20;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--fade-color, #ffffff), transparent);
+}

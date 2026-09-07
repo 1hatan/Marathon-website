@@ -204,4 +204,21 @@ export const fetchDashboardStats = async () => {
   return res.data;
 };
 
+// Razorpay Payments
+export const fetchRazorpayKey = async () => {
+  const res = await api.get('/payment/key');
+  return res.data;
+};
+
+export const createPaymentOrder = async (race_category_id) => {
+  const res = await api.post('/payment/create-order', { race_category_id });
+  return res.data;
+};
+
+export const verifyPayment = async (paymentData) => {
+  const res = await api.post('/payment/verify-payment', paymentData);
+  return res.data;
+};
+
 export default api;
+
