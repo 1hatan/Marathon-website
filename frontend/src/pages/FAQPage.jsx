@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchFaqs } from '../services/api';
 import { ChevronDown, HelpCircle, MessageCircle, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AnimatedItem } from '../components/AnimatedList';
 
 export default function FAQPage() {
   const [faqs, setFaqs] = useState([]);
@@ -54,31 +55,30 @@ export default function FAQPage() {
           </p>
         </div>
 
-        {/* Accordions */}
+        {/* Accordions with AnimatedItem Scroll Scale Animation */}
         <div className="space-y-4">
           {displayFaqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
-              <div
-                key={faq.id || idx}
-                className="bg-white border-2 border-gray-100 rounded-3xl overflow-hidden shadow-sm transition-all hover:border-black"
-              >
-                <button
-                  onClick={() => toggleAccordion(idx)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-black font-outfit text-base text-black uppercase hover:text-rock-cyan transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <HelpCircle className="w-5 h-5 text-rock-cyan shrink-0" />
-                    {faq.question}
-                  </span>
-                  <ChevronDown className={`w-5 h-5 text-black shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-rock-cyan' : ''}`} />
-                </button>
-                {isOpen && (
-                  <div className="px-6 pb-6 pt-1 text-gray-600 text-xs sm:text-sm font-medium leading-relaxed border-t border-gray-100 bg-gray-50/50">
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
+              <AnimatedItem key={faq.id || idx} index={idx} delay={idx * 0.06}>
+                <div className="bg-white border-2 border-gray-100 rounded-3xl overflow-hidden shadow-sm transition-all hover:border-black">
+                  <button
+                    onClick={() => toggleAccordion(idx)}
+                    className="w-full p-6 text-left flex items-center justify-between gap-4 font-black font-outfit text-base text-black uppercase hover:text-rock-cyan transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <HelpCircle className="w-5 h-5 text-rock-cyan shrink-0" />
+                      {faq.question}
+                    </span>
+                    <ChevronDown className={`w-5 h-5 text-black shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-rock-cyan' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-6 pb-6 pt-1 text-gray-600 text-xs sm:text-sm font-medium leading-relaxed border-t border-gray-100 bg-gray-50/50">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              </AnimatedItem>
             );
           })}
         </div>

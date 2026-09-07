@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { fetchRaces, createPaymentOrder, verifyPayment } from '../services/api';
+import { AnimatedItem } from '../components/AnimatedList';
 import {
   User,
   ShieldCheck,
@@ -358,17 +359,19 @@ export default function RegisterPage() {
       <div className="max-w-[1536px] mx-auto space-y-8">
         
         {/* Header Title */}
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="inline-block px-3.5 py-1 rounded-full bg-rock-cyan/10 text-rock-cyan text-xs font-black uppercase tracking-wider">
-            Official Marathon Entry
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-black text-black font-outfit uppercase tracking-tight">
-            Register For <span className="text-rock-yellow">Infinity Run</span>
-          </h1>
-          <p className="text-gray-600 text-sm font-medium">
-            Fill out your participant details below to secure your spot in the race.
-          </p>
-        </div>
+        <AnimatedItem index={0} delay={0.05}>
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="inline-block px-3.5 py-1 rounded-full bg-rock-cyan/10 text-rock-cyan text-xs font-black uppercase tracking-wider">
+              Official Marathon Entry
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-black text-black font-outfit uppercase tracking-tight">
+              Register For <span className="text-rock-yellow">Infinity Run</span>
+            </h1>
+            <p className="text-gray-600 text-sm font-medium">
+              Fill out your participant details below to secure your spot in the race.
+            </p>
+          </div>
+        </AnimatedItem>
 
         {errorMsg && (
           <div className="max-w-4xl mx-auto bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-center gap-3 text-red-700 text-xs sm:text-sm font-bold">
@@ -381,7 +384,9 @@ export default function RegisterPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
           
           {/* LEFT COLUMN: REGISTRATION FORM */}
-          <div className="lg:col-span-8 bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-8 shadow-sm transition-all space-y-6">
+          <div className="lg:col-span-8">
+            <AnimatedItem index={1} delay={0.1}>
+              <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-6 sm:p-8 shadow-sm transition-all space-y-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               
               {/* Field 1: Full Name */}
@@ -579,76 +584,84 @@ export default function RegisterPage() {
 
             </form>
           </div>
+          </AnimatedItem>
+        </div>
 
           {/* RIGHT COLUMN: CARDS matching user original structure */}
           <div className="lg:col-span-4 space-y-6">
             
             {/* Card 1: Your Registration Live Summary Card */}
-            <div className="bg-white border-2 border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
-              <h3 className="text-base font-black text-black font-outfit uppercase border-b border-gray-100 pb-3">
-                Your Registration Summary
-              </h3>
+            <AnimatedItem index={2} delay={0.15}>
+              <div className="bg-white border-2 border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
+                <h3 className="text-base font-black text-black font-outfit uppercase border-b border-gray-100 pb-3">
+                  Your Registration Summary
+                </h3>
 
-              <div className="space-y-3 text-xs font-semibold">
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-gray-500 flex items-center gap-1.5">
-                    👤 Participant
-                  </span>
-                  <span className="font-extrabold text-black text-right truncate max-w-[140px]">
-                    {formData.full_name.trim() || '—'}
-                  </span>
-                </div>
+                <div className="space-y-3 text-xs font-semibold">
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-gray-500 flex items-center gap-1.5">
+                      👤 Participant
+                    </span>
+                    <span className="font-extrabold text-black text-right truncate max-w-[140px]">
+                      {formData.full_name.trim() || '—'}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between py-1 border-t border-gray-50">
-                  <span className="text-gray-500 flex items-center gap-1.5">
-                    🚩 Race Category
-                  </span>
-                  <span className="font-extrabold text-rock-cyan text-right">
-                    {selectedRace.name || '—'}
-                  </span>
-                </div>
+                  <div className="flex items-center justify-between py-1 border-t border-gray-50">
+                    <span className="text-gray-500 flex items-center gap-1.5">
+                      🚩 Race Category
+                    </span>
+                    <span className="font-extrabold text-rock-cyan text-right">
+                      {selectedRace.name || '—'}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between py-1 border-t border-gray-50">
-                  <span className="text-gray-500 flex items-center gap-1.5">
-                    👕 T-Shirt Size
-                  </span>
-                  <span className="font-extrabold text-black text-right">
-                    {formData.t_shirt_size || '—'}
-                  </span>
-                </div>
+                  <div className="flex items-center justify-between py-1 border-t border-gray-50">
+                    <span className="text-gray-500 flex items-center gap-1.5">
+                      👕 T-Shirt Size
+                    </span>
+                    <span className="font-extrabold text-black text-right">
+                      {formData.t_shirt_size || '—'}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-gray-100 text-sm">
-                  <span className="font-bold text-gray-700">
-                    Entry Fee
-                  </span>
-                  <span className="font-black text-black font-outfit text-base">
-                    ₹{selectedRace.fee}
-                  </span>
+                  <div className="flex items-center justify-between py-2 border-t border-gray-100 text-sm">
+                    <span className="font-bold text-gray-700">
+                      Entry Fee
+                    </span>
+                    <span className="font-black text-black font-outfit text-base">
+                      ₹{selectedRace.fee}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </AnimatedItem>
 
             {/* Card 2: Safe & Secure Card */}
-            <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6 space-y-2">
-              <div className="flex items-center gap-2 text-black font-black text-xs font-outfit uppercase">
-                <ShieldCheck className="w-4 h-4 text-rock-cyan" />
-                <span>SAFE & SECURE</span>
+            <AnimatedItem index={3} delay={0.2}>
+              <div className="bg-gray-50 border border-gray-200 rounded-3xl p-6 space-y-2">
+                <div className="flex items-center gap-2 text-black font-black text-xs font-outfit uppercase">
+                  <ShieldCheck className="w-4 h-4 text-rock-cyan" />
+                  <span>SAFE & SECURE</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                  Your data is encrypted and never shared. Medical details are only accessible to the on-course medical team.
+                </p>
               </div>
-              <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                Your data is encrypted and never shared. Medical details are only accessible to the on-course medical team.
-              </p>
-            </div>
+            </AnimatedItem>
 
             {/* Card 3: Need Help Card */}
-            <div className="bg-rock-yellow/20 border border-rock-yellow/40 rounded-3xl p-6 space-y-2">
-              <div className="flex items-center gap-2 text-black font-black text-xs font-outfit uppercase">
-                <HelpCircle className="w-4 h-4 text-black" />
-                <span>NEED HELP?</span>
+            <AnimatedItem index={4} delay={0.25}>
+              <div className="bg-rock-yellow/20 border border-rock-yellow/40 rounded-3xl p-6 space-y-2">
+                <div className="flex items-center gap-2 text-black font-black text-xs font-outfit uppercase">
+                  <HelpCircle className="w-4 h-4 text-black" />
+                  <span>NEED HELP?</span>
+                </div>
+                <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                  Questions about registration? Visit our <Link to="/faq" className="text-black font-bold underline">FAQ</Link> or <Link to="/contact" className="text-black font-bold underline">contact us</Link>.
+                </p>
               </div>
-              <p className="text-xs text-gray-700 leading-relaxed font-medium">
-                Questions about registration? Visit our <Link to="/faq" className="text-black font-bold underline">FAQ</Link> or <Link to="/contact" className="text-black font-bold underline">contact us</Link>.
-              </p>
-            </div>
+            </AnimatedItem>
 
           </div>
 

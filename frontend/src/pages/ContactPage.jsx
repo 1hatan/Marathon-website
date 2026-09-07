@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { submitContact } from '../services/api';
+import { AnimatedItem } from '../components/AnimatedList';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -51,93 +52,104 @@ export default function ContactPage() {
       <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
-          {/* LEFT COLUMN: Header, Info Cards Grid, Map */}
+          {/* LEFT COLUMN: Header, Info Cards Grid */}
           <div className="lg:col-span-6 space-y-6">
             
-            {/* Top Badge & Header Title (Matching Home/About Page Typography & Theme) */}
-            <div className="space-y-3">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rock-cyan/10 text-rock-cyan text-xs font-black uppercase tracking-wider">
-                <MessageSquare className="w-3.5 h-3.5 text-rock-cyan" />
-                <span>GET IN TOUCH</span>
-              </span>
+            {/* Top Badge & Header Title */}
+            <AnimatedItem index={0} delay={0.05}>
+              <div className="space-y-3">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rock-cyan/10 text-rock-cyan text-xs font-black uppercase tracking-wider">
+                  <MessageSquare className="w-3.5 h-3.5 text-rock-cyan" />
+                  <span>GET IN TOUCH</span>
+                </span>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-black font-outfit uppercase tracking-tight leading-none">
-                We'd love to <span className="text-rock-yellow">hear from you</span>
-              </h1>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-black font-outfit uppercase tracking-tight leading-none">
+                  We'd love to <span className="text-rock-yellow">hear from you</span>
+                </h1>
 
-              <p className="text-gray-600 text-sm sm:text-base font-medium leading-relaxed max-w-xl">
-                Questions about registration, routes, volunteering or partnerships? Reach out and our team will respond within 48 hours.
-              </p>
-            </div>
+                <p className="text-gray-600 text-sm sm:text-base font-medium leading-relaxed max-w-xl">
+                  Questions about registration, routes, volunteering or partnerships? Reach out and our team will respond within 48 hours.
+                </p>
+              </div>
+            </AnimatedItem>
 
             {/* 4 Info Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Card 1: Email */}
-              <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group">
-                <div className="w-11 h-11 rounded-2xl bg-rock-cyan/10 border border-rock-cyan/20 text-rock-cyan flex items-center justify-center shrink-0 group-hover:bg-rock-cyan group-hover:text-white transition-colors">
-                  <Mail className="w-5 h-5" />
+              <AnimatedItem index={1} delay={0.1}>
+                <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group h-full">
+                  <div className="w-11 h-11 rounded-2xl bg-rock-cyan/10 border border-rock-cyan/20 text-rock-cyan flex items-center justify-center shrink-0 group-hover:bg-rock-cyan group-hover:text-white transition-colors">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
+                      EMAIL
+                    </span>
+                    <span className="text-xs sm:text-sm font-black text-black break-all">
+                      hello@infinityrun.in
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
-                    EMAIL
-                  </span>
-                  <span className="text-xs sm:text-sm font-black text-black break-all">
-                    hello@infinityrun.in
-                  </span>
-                </div>
-              </div>
+              </AnimatedItem>
 
               {/* Card 2: Phone */}
-              <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group">
-                <div className="w-11 h-11 rounded-2xl bg-rock-yellow/20 border border-rock-yellow/40 text-black flex items-center justify-center shrink-0 group-hover:bg-rock-yellow transition-colors">
-                  <Phone className="w-5 h-5" />
+              <AnimatedItem index={2} delay={0.15}>
+                <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group h-full">
+                  <div className="w-11 h-11 rounded-2xl bg-rock-yellow/20 border border-rock-yellow/40 text-black flex items-center justify-center shrink-0 group-hover:bg-rock-yellow transition-colors">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
+                      PHONE
+                    </span>
+                    <span className="text-xs sm:text-sm font-black text-black">
+                      +91 98400 12700
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
-                    PHONE
-                  </span>
-                  <span className="text-xs sm:text-sm font-black text-black">
-                    +91 98400 12700
-                  </span>
-                </div>
-              </div>
+              </AnimatedItem>
 
               {/* Card 3: Address */}
-              <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group">
-                <div className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center shrink-0 group-hover:bg-rock-cyan transition-colors">
-                  <MapPin className="w-5 h-5" />
+              <AnimatedItem index={3} delay={0.2}>
+                <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group h-full">
+                  <div className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center shrink-0 group-hover:bg-rock-cyan transition-colors">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
+                      ADDRESS
+                    </span>
+                    <span className="text-xs font-black text-black leading-snug block">
+                      Infinity Run Secretariat, Marina Promenade, Chennai 600005, Tamil Nadu, India
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
-                    ADDRESS
-                  </span>
-                  <span className="text-xs font-black text-black leading-snug block">
-                    Infinity Run Secretariat, Marina Promenade, Chennai 600005, Tamil Nadu, India
-                  </span>
-                </div>
-              </div>
+              </AnimatedItem>
 
               {/* Card 4: Hours */}
-              <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group">
-                <div className="w-11 h-11 rounded-2xl bg-rock-cyan/10 border border-rock-cyan/20 text-rock-cyan flex items-center justify-center shrink-0 group-hover:bg-rock-cyan group-hover:text-white transition-colors">
-                  <Clock className="w-5 h-5" />
+              <AnimatedItem index={4} delay={0.25}>
+                <div className="bg-white border-2 border-gray-100 hover:border-black rounded-3xl p-5 shadow-sm transition-all flex items-start gap-4 group h-full">
+                  <div className="w-11 h-11 rounded-2xl bg-rock-cyan/10 border border-rock-cyan/20 text-rock-cyan flex items-center justify-center shrink-0 group-hover:bg-rock-cyan group-hover:text-white transition-colors">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
+                      HOURS
+                    </span>
+                    <span className="text-xs sm:text-sm font-black text-black">
+                      Mon–Sat, 9 AM – 7 PM IST
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-0.5 font-outfit">
-                    HOURS
-                  </span>
-                  <span className="text-xs sm:text-sm font-black text-black">
-                    Mon–Sat, 9 AM – 7 PM IST
-                  </span>
-                </div>
-              </div>
+              </AnimatedItem>
             </div>
 
           </div>
 
           {/* RIGHT COLUMN: Contact Form Card */}
           <div className="lg:col-span-6">
-            <div className="bg-white border-2 border-gray-100 rounded-3xl p-6 sm:p-8 md:p-10 shadow-sm hover:border-black transition-all">
+            <AnimatedItem index={5} delay={0.1}>
+              <div className="bg-white border-2 border-gray-100 rounded-3xl p-6 sm:p-8 md:p-10 shadow-sm hover:border-black transition-all">
               
               {successMsg && (
                 <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-200 text-green-800 text-xs sm:text-sm font-bold flex items-center gap-3 animate-fadeIn">
@@ -237,6 +249,7 @@ export default function ContactPage() {
                 </button>
               </form>
             </div>
+            </AnimatedItem>
           </div>
 
         </div>
